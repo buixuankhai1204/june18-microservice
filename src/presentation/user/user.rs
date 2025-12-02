@@ -2,6 +2,7 @@ use crate::domain::user::user::ModelEx as UserModel;
 use chrono::{NaiveDate, NaiveDateTime};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
+use crate::presentation::common::SubAddressSerializer;
 
 #[derive(Debug, Serialize, Deserialize, ToSchema, Clone)]
 pub struct UserSerializer {
@@ -10,6 +11,7 @@ pub struct UserSerializer {
     pub last_name: String,
     pub username: String,
     pub email: String,
+    pub address: Vec<SubAddressSerializer>,
     pub password: Option<String>,
     pub birth_of_date: Option<NaiveDate>,
     pub phone_number: Option<String>,
@@ -25,6 +27,12 @@ impl From<UserModel> for UserSerializer {
             last_name: value.last_name,
             username: value.username,
             email: value.email,
+            address: value.address.into_iter().map(|a| SubAddressSerializer {
+                title: a.title,
+                address_line_1: a.address_line_1,
+                address_line_2: a.address_line_2,
+                country: a.country,
+            }).collect(),
             password: value.password,
             birth_of_date: value.birth_of_date,
             phone_number: value.phone_number,

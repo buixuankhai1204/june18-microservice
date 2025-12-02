@@ -1,6 +1,7 @@
 use chrono::NaiveDateTime;
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use crate::domain;
 
 #[sea_orm::model]
