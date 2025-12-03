@@ -20,6 +20,8 @@ impl MigrationTrait for Migration {
                     .col(string_null(Users::Password))
                     .col(date_null(Users::BirthOfDate))
                     .col(string_null(Users::PhoneNumber))
+                    .col(string(Users::Status).default("active".to_string()))
+                    .col(boolean(Users::IsDeleted).default(false))
                     .col(timestamp_null(Users::CreatedAt))
                     .col(timestamp_null(Users::DeletedAt))
                     .to_owned(),
@@ -46,6 +48,8 @@ pub enum Users {
     Password,
     BirthOfDate,
     PhoneNumber,
+    Status,
+    IsDeleted,
     CreatedAt,
     DeletedAt,
 }

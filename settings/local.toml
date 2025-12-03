@@ -8,9 +8,9 @@ host = "127.0.0.1"
 port = 5432
 username = "postgres"
 password = "Bxk180621"
-database_name = "erp_broadcom"
-max_connections = 5
-database_url = "postgres://postgres:Bxk180621@localhost:5432/erp_broadcom"
+database_name = "june18-user-service"
+max_connections = 50
+database_url = "postgres://postgres:Bxk180621@localhost:5432/june18-user-service"
 
 [sentry]
 dsn = ""

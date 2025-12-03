@@ -56,7 +56,7 @@ pub const REDIS_TTL_DEFAULT: i64 = 3600; // 1 hour - default TTL for other data
 // pub static APP_IMAGE: Lazy<PathBuf> = Lazy::new(|| get_static_dir().unwrap().join("images/logo.jpg"));
 
 pub static CONFIG: LazyLock<configure::app::AppConfig> =
-    LazyLock::new(|| configure::app::AppConfig::read(Profile::Stag).unwrap());
+    LazyLock::new(|| configure::app::AppConfig::read(Profile::Local).unwrap());
 
 pub static HTTP: LazyLock<Client> =
     LazyLock::new(|| HttpClient::build_from_config(&CONFIG).unwrap());

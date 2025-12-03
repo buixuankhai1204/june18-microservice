@@ -6,6 +6,7 @@ use crate::infrastructure::third_party::redis::lib::RedisConnectionPool;
 use crate::infrastructure::third_party::redis::types::RedisSettings;
 use crate::application::user::user_service::UserService;
 use crate::application::authen::authen_service::AuthenService;
+use crate::application::address::address_service::AddressService;
 
 use rdkafka::producer::FutureProducer;
 use std::sync::Arc;
@@ -18,6 +19,7 @@ pub struct AppState {
     pub kafka_producer: Arc<FutureProducer>,
     pub user_service: Arc<UserService>,
     pub authen_service: Arc<AuthenService>,
+    pub address_service: Arc<AddressService>,
 }
 
 impl AppState {
@@ -35,9 +37,8 @@ impl AppState {
             Arc::new(AuthenService::new(redis.clone(), kafka_producer.clone()));
         let user_service =
             Arc::new(UserService::new(redis.clone(), kafka_producer.clone()));
-
-
-
+        let address_service =
+            Arc::new(AddressService::new(redis.clone(), kafka_producer.clone()));
 
         Ok(Self {
             config,
@@ -46,6 +47,7 @@ impl AppState {
             authen_service,
             kafka_producer,
             user_service,
+            address_service,
         })
     }
 }

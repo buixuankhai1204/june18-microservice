@@ -1,4 +1,4 @@
-use crate::domain::user::user::ModelEx as UserModel;
+use crate::domain::user::user::{ModelEx as UserModel, Status};
 use chrono::{NaiveDate, NaiveDateTime};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -40,4 +40,27 @@ impl From<UserModel> for UserSerializer {
             deleted_at: value.deleted_at,
         }
     }
+}
+
+#[derive(Debug, Deserialize, Serialize, ToSchema, Clone)]
+pub struct CreateUserRequest {
+    pub avatar: Option<String>,
+    pub first_name: String,
+    pub last_name: String,
+    pub username: String,
+    pub email: String,
+    pub password: String,
+    pub birth_of_date: Option<NaiveDate>,
+    pub phone_number: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Serialize, ToSchema, Clone)]
+pub struct UpdateUserRequest {
+    pub avatar: Option<String>,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
+    pub email: Option<String>,
+    pub birth_of_date: Option<NaiveDate>,
+    pub phone_number: Option<String>,
+    pub status: Option<Status>,
 }

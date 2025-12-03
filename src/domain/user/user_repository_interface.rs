@@ -1,12 +1,12 @@
 use super::user;
 use crate::core::error::AppResult;
 use async_trait::async_trait;
-use sea_orm::{DatabaseConnection, DatabaseTransaction};
+use sea_orm::DatabaseTransaction;
 
 #[async_trait]
 pub trait UserRepositoryInterface: Send + Sync {
-    async fn create_user(conn: &DatabaseTransaction, user: user::ActiveModel) -> AppResult<user::Model>;
-    async fn update_user(conn: &DatabaseTransaction, user: user::ActiveModel) -> AppResult<user::Model>;
+    async fn create_user(conn: &DatabaseTransaction, model: user::ActiveModelEx) -> AppResult<bool>;
+    async fn update_user(conn: &DatabaseTransaction, model: user::ActiveModelEx) -> AppResult<bool>;
     async fn find_user_by_id(conn: &DatabaseTransaction, id: i64) -> AppResult<Option<user::ModelEx>>;
     async fn find_user_by_username(conn: &DatabaseTransaction, username: &str) -> AppResult<Option<user::ModelEx>>;
     async fn find_user_by_email(conn: &DatabaseTransaction, email: &str) -> AppResult<Option<user::ModelEx>>;
