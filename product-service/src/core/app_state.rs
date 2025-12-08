@@ -1,13 +1,13 @@
 use crate::core::configure::app::AppConfig;
 use crate::core::configure::kafka::KafkaConfig;
 use crate::core::error::{AppError, AppResult};
-use crate::infrastructure::persistence::postgres::{DatabaseClient, DatabaseClientExt};
+use crate::infrastructure::error::persistence::postgres::{DatabaseClient, DatabaseClientExt};
 use crate::infrastructure::third_party::redis::lib::RedisConnectionPool;
 use crate::infrastructure::third_party::redis::types::RedisSettings;
 use crate::application::user::user_service::UserService;
 use crate::application::authen::authen_service::AuthenService;
 use crate::application::address::address_service::AddressService;
-use crate::infrastructure::gateway::service_registry::ServiceRegistry;
+use crate::infrastructure::error::gateway::service_registry::ServiceRegistry;
 
 use rdkafka::producer::FutureProducer;
 use std::sync::Arc;

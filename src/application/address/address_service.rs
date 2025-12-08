@@ -1,14 +1,14 @@
 use crate::application::address::address_service_interface::AddressServiceInterface;
-use crate::core::error::{AppError, AppResult};
 use crate::domain::address::address::Entity;
 use crate::domain::address::address_repository_interface::AddressRepositoryInterface;
 use crate::domain::user::user_repository_interface::UserRepositoryInterface;
-use crate::infrastructure::third_party::redis::lib::RedisConnectionPool;
+use crate::infrastructure::persistence::redis_client::RedisConnectionPool;
 use crate::presentation::address::address::{AddressSerializer, CreateAddressRequest, UpdateAddressRequest};
 use rdkafka::producer::FutureProducer;
 use sea_orm::{DatabaseTransaction, IntoActiveModel};
 use std::sync::Arc;
 use crate::domain::address;
+use crate::infrastructure::error::{AppError, AppResult};
 
 /// Application service - orchestrates domain logic, database, and external services
 pub struct AddressService {

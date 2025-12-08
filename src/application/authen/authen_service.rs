@@ -1,16 +1,16 @@
 use crate::application::authen::authen_service_interface::AuthenServiceInterface;
-use crate::core::error::{AppError, AppResult};
-use crate::infrastructure::third_party::redis::lib::RedisConnectionPool;
+use crate::infrastructure::persistence::redis_client::RedisConnectionPool;
 use crate::infrastructure::third_party::token;
 use crate::presentation::authen::authen::TokenResponse;
-use crate::util::password;
 use rdkafka::producer::FutureProducer;
-use sea_orm::{ColumnTrait, DatabaseTransaction, EntityTrait, QueryFilter};
+use sea_orm::DatabaseTransaction;
 use std::sync::Arc;
 use uuid::Uuid;
 use crate::application::authen::authen_command::LoginByEmailCommand;
+use crate::application::authen::claim::verify;
 use crate::domain::user::user;
 use crate::domain::user::user_repository_interface::UserRepositoryInterface;
+use crate::infrastructure::error::{AppError, AppResult};
 
 pub struct AuthenService {
     pub redis: Arc<RedisConnectionPool>,
@@ -21,6 +21,8 @@ impl AuthenService {
     pub fn new(redis: Arc<RedisConnectionPool>, kafka_producer: Arc<FutureProducer>) -> Self {
         Self { redis, kafka_producer }
     }
+
+
 }
 
 impl AuthenServiceInterface for AuthenService {
@@ -43,24 +45,20 @@ impl AuthenServiceInterface for AuthenService {
             },
         };
 
-        match password::verify(req.get_password().to_string(), user_res.password.unwrap_or_default()).await {
+        match verify(req.get_password().to_string(), user_res.password.unwrap_or_default()).await {
             Ok(_) => (),
             Err(err) => return Err(err),
         }
 
         let user_uuid = Uuid::new_v4();
-        match &self
-            .redis
+        self.redis
             .set_key_with_expiry::<String>(
-                &format!("profile:user_id:{}", user_res.id).to_string().into(),
-                user_uuid.to_string().into(),
+                &format!("profile:user_id:{}", user_res.id),
+                &user_uuid.to_string(),
                 3600,
             )
             .await
-        {
-            Ok(session_id) => session_id,
-            Err(err) => return Err(AppError::BadRequestError(err.to_string())),
-        };
+            .map_err(|err| AppError::BadRequestError(err.to_string()))?;
 
         let res = match token::service_generate_tokens(&user_res.id, &user_uuid) {
             Ok(res) => res,
@@ -81,7 +79,7 @@ impl AuthenServiceInterface for AuthenService {
 
     async fn logout(&self, user_id: i64, user_uuid: &Uuid) -> AppResult<()> {
         self.redis
-            .delete_key(&format!("profile:user_id:{}", user_id).into())
+            .delete_key(&format!("profile:user_id:{}", user_id))
             .await
             .map_err(|err| AppError::BadRequestError(err.to_string()))?;
 

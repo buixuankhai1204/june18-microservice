@@ -1,6 +1,6 @@
-use crate::util::constant::BEARER;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
+use crate::infrastructure::constant::BEARER;
 
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 #[serde(tag = "type")]

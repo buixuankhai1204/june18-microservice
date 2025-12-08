@@ -1,5 +1,5 @@
 use crate::core::app_state::AppState;
-use crate::core::error::{AppError, AppResult};
+use crate::infrastructure::error::{AppError, AppResult};
 use crate::infrastructure::gateway::service_registry::ServiceConfig;
 use axum::body::Body;
 use axum::http::{HeaderMap, HeaderName, HeaderValue, Method, Request, Response};

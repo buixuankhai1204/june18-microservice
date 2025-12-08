@@ -2,7 +2,7 @@ use chrono::{NaiveDate, NaiveDateTime, Utc};
 use sea_orm::entity::prelude::*;
 use sea_orm::{ActiveModelBehavior, ActiveModelTrait, EnumIter};
 use serde::{Deserialize, Serialize};
-use crate::core::error::{AppError, AppResult};
+use crate::infrastructure::error::{AppError, AppResult};
 use crate::presentation::user::user::{CreateUserRequest, UpdateUserRequest};
 
 #[sea_orm::model]
@@ -45,8 +45,8 @@ impl ModelEx {
     /// Business Rule: Create a new user model with validation
     pub fn create_new_user(
         request: &CreateUserRequest
-    ) -> crate::core::error::AppResult<Self> {
-        use crate::core::error::AppError;
+    ) -> crate::infrastructure::error::AppResult<Self> {
+        use crate::infrastructure::error::AppError;
 
         // Validate required fields
         if request.first_name.trim().is_empty() {

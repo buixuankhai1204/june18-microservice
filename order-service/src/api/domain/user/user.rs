@@ -3,7 +3,6 @@ use crate::core::error::AppResult;
 use crate::core::response::{ClientResponseError, EntityResponse};
 use crate::application::user::user_service_interface::UserServiceInterface;
 use crate::presentation::user::user::{UserSerializer, CreateUserRequest, UpdateUserRequest};
-use crate::util::claim::UserClaims;
 use axum::extract::{Path, Query, State};
 use axum::Json;
 use log::error;

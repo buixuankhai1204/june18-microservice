@@ -1,5 +1,5 @@
 use crate::core::configure::app::AppConfig;
-use crate::core::error::AppResult;
+use crate::infrastructure::error::AppResult;
 use user_migration;
 use sea_orm::{ConnectOptions, Database, DatabaseConnection};
 use sea_orm_migration::MigratorTrait;

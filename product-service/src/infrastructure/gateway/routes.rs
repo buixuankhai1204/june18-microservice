@@ -3,7 +3,6 @@ use crate::core::error::{AppError, AppResult};
 use crate::core::response::EntityResponse;
 use crate::infrastructure::gateway::proxy::{check_service_health, ProxyClient};
 use crate::infrastructure::gateway::service_registry::ServiceConfig;
-use crate::util::claim::UserClaims;
 use axum::body::Body;
 use axum::extract::{Request, State};
 use axum::http::Response;

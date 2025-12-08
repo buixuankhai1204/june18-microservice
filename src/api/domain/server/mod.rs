@@ -1,12 +1,11 @@
 use crate::core::app_state::AppState;
-use crate::core::error::{AppError, AppResult};
 use crate::core::response::{
     ClientResponseError, EntityResponse, MessageResponse, ServiceStatusResponse,
 };
-use crate::util::claim::UserClaims;
 use axum::{extract::State, Json};
 use axum_extra::extract::Multipart;
 use log::error;
+use crate::infrastructure::error::AppResult;
 
 #[utoipa::path(
     get,

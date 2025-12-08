@@ -1,14 +1,14 @@
 use crate::core::app_state::AppState;
-use crate::core::error::AppResult;
 use crate::core::response::{ClientResponseError, EntityResponse};
 use crate::application::address::address_service_interface::AddressServiceInterface;
 use crate::presentation::address::address::{AddressSerializer, CreateAddressRequest, UpdateAddressRequest};
-use crate::util::claim::UserClaims;
 use axum::extract::{Path, Query, State};
 use axum::Json;
 use log::error;
 use sea_orm::TransactionTrait;
 use serde::Deserialize;
+use crate::application::authen::claim::UserClaims;
+use crate::infrastructure::error::AppResult;
 
 #[derive(Deserialize)]
 pub struct UserIdQuery {

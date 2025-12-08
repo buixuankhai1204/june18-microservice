@@ -275,7 +275,7 @@ pub async fn proxy_to_payment_service(
 Edit: `src/api/mod.rs`
 
 ```rust
-use crate::infrastructure::gateway::routes::{
+use crate::infrastructure::error::gateway::routes::{
     // ... existing imports
     proxy_to_payment_service,  // Add this
 };

@@ -3,7 +3,7 @@ use serde::Serialize;
 use std::time::Duration;
 
 use crate::core::configure::app::AppConfig;
-use crate::core::error::AppResult;
+use crate::infrastructure::error::AppResult;
 
 pub type HttpClient = reqwest::Client;
 

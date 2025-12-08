@@ -12,12 +12,9 @@ edition = "2021"
 name = "product-service"
 path = "src/bin/main.rs"
 
-[features]
-multitenancy_fallback = []
-
 [dependencies]
- product-migration = { path = "./product-migration" }
-
+product-migration = { path = "./product-migration" }
+utils = {workspace = true}
 # --- 🌐 Web Framework & Routing ---
 axum = "0.8.3"
 
@@ -35,7 +32,7 @@ utoipa-swagger-ui = { version = "9.0.0", features = ["axum"] }
 
 # --- 🛡️ Auth, Security ---
 argon2 = "0.5.3"
-jsonwebtoken = "9.3.0"
+jsonwebtoken = { version = "10.1.0", features = ["default"] }
 validator = { version = "0.20.0", features = ["derive"] }
 
 # --- 🗄️ Database / ORM ---
@@ -44,7 +41,7 @@ sea-orm = { version = "2.0.0-rc.19", features = ["sqlx-postgres", "runtime-tokio
 sea-orm-migration = { version = "2.0.0-rc.20", features = ["default"] }
 
 # --- 🧠 Redis Clients ---
-redis = { version = "0.27.6", features = ["tokio-comp"] }
+redis = { version = "1.0.0", features = ["tokio-comp", "connection-manager"] }
 fred = { version = "7.1.2", features = ["metrics", "partial-tracing"] }
 
 # --- 🧰 Utilities, Errors, Traits ---

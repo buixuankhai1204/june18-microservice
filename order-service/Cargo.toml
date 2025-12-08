@@ -7,22 +7,11 @@ edition = "2021"
 name = "order-service"
 path = "src/bin/main.rs"
 
-# [[bin]]
-# name = "administration gRPC server"
-# path = "src/bin/administration.rs"
-
-# [[bin]]
-# name = "traffic gRPC server"
-# path = "src/bin/traffic.rs"
-
-# [[bin]]
-# name = "migrations"
-# path = "./user-migration"
-
 [dependencies]
 # --- 🌐 Web Framework & Routing ---
 axum = "0.8.3"
 order-migration = { path = "./order-migration" }
+utils = {path = "../src/utils"}
 
 
 axum-extra = { version = "0.10.1", features = ["query", "typed-header", "multipart"] }
@@ -39,7 +28,7 @@ utoipa-swagger-ui = { version = "9.0.0", features = ["axum"] }
 
 # --- 🛡️ Auth, Security ---
 argon2 = "0.5.3"
-jsonwebtoken = "9.3.0"
+jsonwebtoken = { version = "10.1.0", features = ["default"] }
 validator = { version = "0.20.0", features = ["derive"] }
 
 # --- 🗄️ Database / ORM ---
@@ -48,7 +37,7 @@ sea-orm = { version = "2.0.0-rc.19", features = ["sqlx-postgres", "runtime-tokio
 sea-orm-migration = { version = "2.0.0-rc.20", features = ["default"] }
 
 # --- 🧠 Redis Clients ---
-redis = { version = "0.27.6", features = ["tokio-comp"] }
+redis = { version = "1.0.0", features = ["tokio-comp", "connection-manager"] }
 fred = { version = "7.1.2", features = ["metrics", "partial-tracing"] }
 
 # --- 🧰 Utilities, Errors, Traits ---

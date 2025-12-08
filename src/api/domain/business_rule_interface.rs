@@ -1,4 +1,4 @@
-use crate::core::error::AppResult;
+use crate::infrastructure::error::AppResult;
 
 pub trait BusinessRuleInterface {
     fn check_broken(&self) -> AppResult<()>;

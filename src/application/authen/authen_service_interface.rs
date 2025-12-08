@@ -1,8 +1,8 @@
-use crate::core::error::AppResult;
 use crate::presentation::authen::authen::TokenResponse;
 use sea_orm::DatabaseTransaction;
 use uuid::Uuid;
 use crate::application::authen::authen_command::LoginByEmailCommand;
+use crate::infrastructure::error::AppResult;
 
 pub trait AuthenServiceInterface: Send + Sync + 'static {
     async fn login_by_email(

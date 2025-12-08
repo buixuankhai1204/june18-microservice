@@ -1,14 +1,14 @@
-use crate::core::error::{AppError, AppResult};
-use crate::infrastructure::third_party::redis::lib::RedisConnectionPool;
+use crate::infrastructure::persistence::redis_client::RedisConnectionPool;
 use crate::application::user::user_service_interface::UserServiceInterface;
 use crate::domain::user::user_repository_interface::UserRepositoryInterface;
 use crate::presentation::user::user::{UserSerializer, CreateUserRequest, UpdateUserRequest};
-use crate::util::password;
 use log::error;
 use rdkafka::producer::FutureProducer;
 use sea_orm::{DatabaseTransaction, IntoActiveModel};
 use std::sync::Arc;
+use crate::application::authen::claim::hash;
 use crate::domain::user;
+use crate::infrastructure::error::{AppError, AppResult};
 
 /// Application service - orchestrates domain logic, database, and external services
 #[derive()]
@@ -44,7 +44,7 @@ impl UserServiceInterface for UserService {
         }
 
         // External service: Hash password
-        let hashed_password = password::hash(request.password.clone()).await?;
+        let hashed_password = hash(request.password.clone()).await?;
 
         let user = user::user::ModelEx::create_new_user(
             &request
@@ -96,7 +96,7 @@ impl UserServiceInterface for UserService {
         let updated_user = user::user::Entity::update_user(conn, updated_model.into_active_model()).await?;
 
         // External service: Clear Redis cache
-        let _ = self.redis.delete_key(&format!("profile:user_id:{}", id).to_string().into()).await;
+        // let _ = self.redis..delete_key(&format!("profile:user_id:{}", id).to_string().into()).await;
 
         // TODO: External service - Kafka event publishing
         // self.kafka_producer.send(...)
@@ -113,7 +113,7 @@ impl UserServiceInterface for UserService {
         let info_user = self
             .redis
             .get_and_deserialize_key::<UserSerializer>(
-                &format!("profile:user_id:{}", user_id).to_string().into(),
+                &format!("profile:user_id:{}", user_id),
                 "UserRelatedResponse",
             )
             .await;
@@ -130,10 +130,8 @@ impl UserServiceInterface for UserService {
                         let _ = self
                             .redis
                             .serialize_and_set_key_with_expiry(
-                                &format!("profile:user_id:{}", user_id.to_string())
-                                    .to_string()
-                                    .into(),
-                                &profile,
+                                &format!("profile:user_id:{}", user_id),
+                                &serde_json::to_value(&profile).unwrap_or_default(),
                                 88640,
                             )
                             .await;
@@ -169,7 +167,7 @@ impl UserServiceInterface for UserService {
         user::user::Entity::delete_user(conn, id).await?;
 
         // External service: Clear Redis cache
-        let _ = self.redis.delete_key(&format!("profile:user_id:{}", id).to_string().into()).await;
+        let _ = self.redis.delete_key(&format!("profile:user_id:{}", id)).await;
 
         // TODO: External service - Kafka event publishing
         // self.kafka_producer.send(...)
@@ -199,10 +197,10 @@ impl UserServiceInterface for UserService {
 
     async fn logout(&self, _conn: &DatabaseTransaction, user_id: i64) -> AppResult<bool> {
         // External service: Clear Redis cache (session invalidation)
-        match self.redis.delete_key(&format!("profile:user_id:{user_id}").to_string().into()).await
-        {
-            Ok(_) => Ok(true),
-            Err(err) => Err(AppError::BadRequestError(err.to_string())),
-        }
+        self.redis
+            .delete_key(&format!("profile:user_id:{user_id}"))
+            .await
+            .map_err(|err| AppError::BadRequestError(err.to_string()))?;
+        Ok(true)
     }
 }

@@ -1,4 +1,4 @@
-use crate::core::error::{AppError, AppResult};
+use crate::infrastructure::error::{AppError, AppResult};
 use crate::domain::address::address::{ActiveModel, ActiveModelEx, Column, Entity, Model, ModelEx};
 use crate::domain::address::address_repository_interface::AddressRepositoryInterface;
 use crate::domain::user;

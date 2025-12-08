@@ -1,6 +1,6 @@
-use crate::core::error::AppResult;
-use crate::util::claim::UserClaims;
-use crate::util::constant::{
+use crate::infrastructure::error::AppResult;
+use crate::application::authen::claim::UserClaims;
+use crate::infrastructure::constant::{
     ACCESS_TOKEN_ENCODE_KEY, EXPIRE_BEARER_TOKEN_SECS, EXPIRE_REFRESH_TOKEN_SECS,
     REFRESH_TOKEN_ENCODE_KEY,
 };

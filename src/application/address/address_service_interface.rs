@@ -1,4 +1,4 @@
-use crate::core::error::AppResult;
+use crate::infrastructure::error::AppResult;
 use crate::presentation::address::address::{AddressSerializer, CreateAddressRequest, UpdateAddressRequest};
 use sea_orm::DatabaseTransaction;
 

@@ -1,12 +1,10 @@
 use axum::http::{StatusCode, Uri};
 use axum::routing::{any, get};
 use crate::core::app_state::AppState;
-use crate::infrastructure::gateway::routes::{
-    gateway_health_check, list_services, proxy_to_product_service, proxy_to_order_service,
-    proxy_to_inventory_service, proxy_to_notification_service,
-};
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
+use crate::infrastructure::gateway::routes::{gateway_health_check, list_services, proxy_to_inventory_service, proxy_to_notification_service, proxy_to_order_service, proxy_to_product_service};
+
 pub mod domain;
 
 pub fn build_routes() -> OpenApiRouter<AppState> {

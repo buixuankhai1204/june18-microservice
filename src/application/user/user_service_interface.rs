@@ -1,6 +1,6 @@
-use crate::core::error::AppResult;
 use crate::presentation::user::user::{UserSerializer, CreateUserRequest, UpdateUserRequest};
 use sea_orm::DatabaseTransaction;
+use crate::infrastructure::error::AppResult;
 
 pub trait UserServiceInterface: Send + Sync + 'static {
     async fn create_user(

@@ -2,16 +2,9 @@ use argon2::password_hash::SaltString;
 use argon2::{Argon2, PasswordHasher};
 use log::{error, info, LevelFilter};
 use rand::rngs::OsRng;
-use order_service::core::error::AppResult;
-use order_service::core::http::server::AppServer;
-use order_service::util::constant::CONFIG;
-fn generate_admin_password() -> String {
-    let password = "admin123";
-    let salt = SaltString::generate(&mut OsRng);
-    let argon2 = Argon2::default();
-
-    argon2.hash_password(password.as_bytes(), &salt).unwrap().to_string()
-}
+use api_gateway::core::http::server::AppServer;
+use api_gateway::infrastructure::constant::CONFIG;
+use api_gateway::infrastructure::error::AppResult;
 
 #[tokio::main]
 async fn main() -> AppResult<()> {
@@ -23,8 +16,6 @@ async fn main() -> AppResult<()> {
     let db = server.state.db.clone();
     let redis = server.state.redis.clone();
     info!("Starting server...");
-
-    println!("Admin password hash: {}", generate_admin_password());
 
     let server_task = tokio::spawn(async {
         if let Err(e) = server.run().await {

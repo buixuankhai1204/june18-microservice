@@ -1,6 +1,5 @@
 use crate::application::authen::authen_service_interface::AuthenServiceInterface;
 use crate::core::app_state::AppState;
-use crate::core::error::{AppError, AppResult};
 use crate::core::response::ClientResponseError;
 use axum::extract::State;
 use axum::Json;
@@ -8,6 +7,7 @@ use log::error;
 use sea_orm::TransactionTrait;
 use validator::Validate;
 use crate::application::authen::authen_command::LoginByEmailCommand;
+use crate::infrastructure::error::{AppError, AppResult};
 use crate::presentation::authen::authen::LoginResponse;
 
 #[utoipa::path(

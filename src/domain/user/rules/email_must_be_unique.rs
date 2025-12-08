@@ -1,5 +1,5 @@
 use crate::api::domain::business_rule_interface::BusinessRuleInterface;
-use crate::core::error::{AppError, AppResult};
+use crate::infrastructure::error::{AppError, AppResult};
 
 pub struct EmailMustBeUnique {
     pub is_unique: bool,

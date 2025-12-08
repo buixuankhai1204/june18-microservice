@@ -1,10 +1,15 @@
 [package]
-name = "erp_backend"
+name = "api-gateway"
 version = "0.1.0"
 edition = "2021"
 
 [workspace]
-exclude = ["user_migration/src/lib.rs", "order-service", "product-service", "order-service/order-migration/src/lib.rs", "product-service/product-migration/src/lib.rs"]
+members = [
+    "user_migration",
+    "order-service",
+    "product-service",
+    "src/utils",
+]
 
 [[bin]]
 name = "api-gateway"
@@ -18,25 +23,12 @@ path = "order-service/src/bin/main.rs"
 name = "product-service"
 path = "product-service/src/bin/main.rs"
 
-# [[bin]]
-# name = "administration gRPC server"
-# path = "src/bin/administration.rs"
+[workspace.dependencies]
+utils = { path = "src/utils" }
 
-# [[bin]]
-# name = "traffic gRPC server"
-# path = "src/bin/traffic.rs"
-
-# [[bin]]
-# name = "migrations"
-# path = "./user-migration"
-
-[features]
-multitenancy_fallback = []
 
 [dependencies]
 user_migration = { path = "user_migration" }
-product-service = { path = "./product-service" }
-order-service = { path = "./order-service" }
 
 # --- 🌐 Web Framework & Routing ---
 axum = "0.8.3"
@@ -55,7 +47,7 @@ utoipa-swagger-ui = { version = "9.0.0", features = ["axum"] }
 
 # --- 🛡️ Auth, Security ---
 argon2 = "0.5.3"
-jsonwebtoken = "9.3.0"
+jsonwebtoken = { version = "10.1.0", features = ["default"] }
 validator = { version = "0.20.0", features = ["derive"] }
 
 # --- 🗄️ Database / ORM ---
@@ -63,9 +55,8 @@ sqlx = { version = "=0.6.3", features = ["runtime-tokio-rustls", "postgres"] }
 sea-orm = { version = "2.0.0-rc.19", features = ["sqlx-postgres", "runtime-tokio-rustls", "debug-print", "macros"] }
 sea-orm-migration = { version = "=2.0.0-rc.20", features = ["default"] }
 
-# --- 🧠 Redis Clients ---
-redis = { version = "0.27.6", features = ["tokio-comp"] }
-fred = { version = "7.1.2", features = ["metrics", "partial-tracing"] }
+# --- 🧠 Redis Client ---
+redis = { version = "1.0.0", features = ["tokio-comp", "connection-manager"] }
 
 # --- 🧰 Utilities, Errors, Traits ---
 anyhow = "1.0.94"

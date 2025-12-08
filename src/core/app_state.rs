@@ -1,9 +1,7 @@
 use crate::core::configure::app::AppConfig;
 use crate::core::configure::kafka::KafkaConfig;
-use crate::core::error::{AppError, AppResult};
 use crate::infrastructure::persistence::postgres::{DatabaseClient, DatabaseClientExt};
-use crate::infrastructure::third_party::redis::lib::RedisConnectionPool;
-use crate::infrastructure::third_party::redis::types::RedisSettings;
+use crate::infrastructure::persistence::redis_client::RedisConnectionPool;
 use crate::application::user::user_service::UserService;
 use crate::application::authen::authen_service::AuthenService;
 use crate::application::address::address_service::AddressService;
@@ -11,6 +9,7 @@ use crate::infrastructure::gateway::service_registry::ServiceRegistry;
 
 use rdkafka::producer::FutureProducer;
 use std::sync::Arc;
+use crate::infrastructure::error::{AppError, AppResult};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -30,9 +29,9 @@ impl AppState {
 
         let db = Arc::new(DatabaseClient::build_from_config(&config).await?);
         let redis = Arc::new(
-            RedisConnectionPool::new(&RedisSettings::default())
+            RedisConnectionPool::new(&config.redis.get_url())
                 .await
-                .map_err(|e| AppError::BadRequestError(e.to_string()))?,
+                .map_err(|e| AppError::BadRequestError(e.to_string()))?
         );
         let kafka_producer = Arc::new(KafkaConfig::new().create_kafka_producer());
         let authen_service =

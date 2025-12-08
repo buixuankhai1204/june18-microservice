@@ -1,9 +1,8 @@
 use crate::core::app_state::AppState;
-use crate::core::error::{AppError, AppResult};
+use crate::infrastructure::error::{AppError, AppResult};
 use crate::core::response::EntityResponse;
 use crate::infrastructure::gateway::proxy::{check_service_health, ProxyClient};
 use crate::infrastructure::gateway::service_registry::ServiceConfig;
-use crate::util::claim::UserClaims;
 use axum::body::Body;
 use axum::extract::{Request, State};
 use axum::http::Response;
@@ -12,6 +11,8 @@ use axum::Json;
 use log::{error, info};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
+use crate::application::authen::claim::UserClaims;
+use crate::infrastructure::constant::ACCESS_TOKEN_DECODE_KEY;
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ServiceHealth {
@@ -155,7 +156,7 @@ fn extract_claims_from_request(request: &Request) -> Option<UserClaims> {
         .and_then(|h| h.to_str().ok())
         .and_then(|auth_str| {
             if let Some(token) = auth_str.strip_prefix("Bearer ") {
-                use crate::util::constant::ACCESS_TOKEN_DECODE_KEY;
+                &ACCESS_TOKEN_DECODE_KEY;
                 UserClaims::decode(token, &ACCESS_TOKEN_DECODE_KEY).ok().map(|td| td.claims)
             } else {
                 None

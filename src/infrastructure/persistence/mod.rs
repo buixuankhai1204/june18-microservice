@@ -1,2 +1,4 @@
 pub mod postgres;
-pub mod redis_client;
+
+// Re-export redis_client from utils
+pub use utils::redis_client;

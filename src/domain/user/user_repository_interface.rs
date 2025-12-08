@@ -1,5 +1,5 @@
 use super::user;
-use crate::core::error::AppResult;
+use crate::infrastructure::error::AppResult;
 use async_trait::async_trait;
 use sea_orm::DatabaseTransaction;
 

@@ -1,11 +1,11 @@
 use crate::api::build_routes;
 use crate::core::app_state::AppState;
 use crate::core::configure::app::AppConfig;
-use crate::core::error::AppResult;
+use crate::infrastructure::error::AppResult;
 use axum::body::Bytes;
 use axum::extract::DefaultBodyLimit;
 use axum::http::{header, HeaderValue};
-use fred::tracing;
+use tracing;
 use std::sync::Arc;
 use std::time::Duration;
 use tower::ServiceBuilder;

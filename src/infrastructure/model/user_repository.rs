@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseTransaction, EntityLoaderTrait, EntityTrait, PaginatorTrait, QueryFilter, Set};
-use crate::core::error::AppResult;
+use crate::infrastructure::error::AppResult;
 use crate::domain::user::user::{ActiveModel, ActiveModelEx, Model, ModelEx};
 use crate::domain::user::user_repository_interface::UserRepositoryInterface;
 use crate::domain::{address, user};
@@ -61,7 +61,7 @@ impl UserRepositoryInterface for user::user::Entity {
         let user = user::user::Entity::find_by_id(id)
             .one(conn)
             .await?
-            .ok_or_else(|| crate::core::error::AppError::EntityNotFoundError {
+            .ok_or_else(|| crate::infrastructure::error::AppError::EntityNotFoundError {
                 detail: format!("User with id {} not found", id),
             })?;
 

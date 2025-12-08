@@ -46,8 +46,8 @@ impl ModelEx {
     /// Business Rule: Create a new address model with validation
     pub fn create_new_address(
         request: &CreateAddressRequest,
-    ) -> crate::core::error::AppResult<Self> {
-        use crate::core::error::AppError;
+    ) -> crate::infrastructure::error::AppResult<Self> {
+        use crate::infrastructure::error::AppError;
 
         // Validate required fields
 
@@ -88,8 +88,8 @@ impl ModelEx {
     pub fn update_from(
         mut self,
         request: &UpdateAddressRequest,
-    ) -> crate::core::error::AppResult<Self> {
-        use crate::core::error::AppError;
+    ) -> crate::infrastructure::error::AppResult<Self> {
+        use crate::infrastructure::error::AppError;
 
 
         if let Some(ref address_line_1) = request.address_line_1 {

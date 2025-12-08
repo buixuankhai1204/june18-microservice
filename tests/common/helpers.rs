@@ -30,10 +30,9 @@ pub fn generate_test_token(user_id: i64, department_id: Option<i64>) -> String {
 pub fn create_test_user_claims(
     user_id: i64,
     department_id: Option<i64>,
-) -> erp_backend::util::claim::UserClaims {
-    erp_backend::util::claim::UserClaims {
+) -> api_gateway::application::authen::claim::UserClaims {
+    api_gateway::application::authen::claim::UserClaims {
         user_id,
-        department_id,
         exp: 10000000000,
         iat: chrono::Utc::now().timestamp(),
         sid: uuid::Uuid::new_v4(),
@@ -41,18 +40,18 @@ pub fn create_test_user_claims(
 }
 
 /// Helper to check if a result contains a specific error message
-pub fn assert_error_contains(result: &erp_backend::core::error::AppError, expected: &str) -> bool {
+pub fn assert_error_contains(result: &crate::infrastructure::error::AppError, expected: &str) -> bool {
     match result {
-        erp_backend::core::error::AppError::BadRequestError(msg) => msg.contains(expected),
-        erp_backend::core::error::AppError::NotFound(msg) => msg.contains(expected),
-        erp_backend::core::error::AppError::UnauthorizedError(msg) => msg.contains(expected),
-        erp_backend::core::error::AppError::EntityNotFoundError { detail } => {
+        crate::infrastructure::error::AppError::BadRequestError(msg) => msg.contains(expected),
+        crate::infrastructure::error::AppError::NotFound(msg) => msg.contains(expected),
+        crate::infrastructure::error::AppError::UnauthorizedError(msg) => msg.contains(expected),
+        crate::infrastructure::error::AppError::EntityNotFoundError { detail } => {
             detail.contains(expected)
         },
-        erp_backend::core::error::AppError::EntityNotAvailableError { detail } => {
+        crate::infrastructure::error::AppError::EntityNotAvailableError { detail } => {
             detail.contains(expected)
         },
-        erp_backend::core::error::AppError::InvalidPayloadError(msg) => msg.contains(expected),
+        crate::infrastructure::error::AppError::InvalidPayloadError(msg) => msg.contains(expected),
         _ => false,
     }
 }
