@@ -1,0 +1,31 @@
+profile = "test"
+[server]
+addr = "127.0.0.1"
+port = 3001
+
+[db]
+host = "127.0.0.1"
+port = 5432
+username = "postgres"
+password = "Bxk180621"
+database_name = "erp_broadcom"
+max_connections = 5
+
+[sentry]
+dsn = ""
+
+[secret]
+private_access_key = "/static/secret_key/private_access_rsa_key.pem"
+public_access_key = "/static/secret_key/public_access_rsa_key.pem"
+private_refresh_key = "/static/secret_key/private_refresh_rsa_key.pem"
+public_refresh_key = "/static/secret_key/public_refresh_rsa_key.pem"
+
+[redis]
+username = "default"
+password = "HEeQ5Sx9OlV7SMBImXFT9yIFA7pBNkhO"
+host = "127.0.0.1"
+port = 6379
+database_name = "0"
+
+[http]
+timeout = 1000000

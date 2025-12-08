@@ -1,0 +1,40 @@
+profile = "dev"
+[server]
+addr = "0.0.0.0"
+port = 3000
+
+
+[db]
+host = "194.163.40.189"
+port = 5432
+username = "postgres"
+password = "vtvms2025"
+database_name = "erp_broadcom_dev"
+max_connections = 5
+database_url="postgres://postgres:Bxk180621@localhost:5432/uptop"
+
+[sentry]
+dsn = ""
+
+[secret]
+private_access_key = "/static/secret_key/private_access_rsa_key.pem"
+public_access_key = "/static/secret_key/public_access_rsa_key.pem"
+private_refresh_key = "/static/secret_key/private_refresh_rsa_key.pem"
+public_refresh_key = "/static/secret_key/public_refresh_rsa_key.pem"
+
+[redis]
+username = "default"
+password = "HEeQ5Sx9OlV7SMBImXFT9yIFA7pBNkhO"
+host = "194.163.40.189"
+port = 6379
+database_name = "0"
+
+[http]
+timeout = 1000000
+
+
+[kafka]
+server_url = ""
+timeout_ms = ""
+allow_auto_create_topics = ""
+enable_auto_commit = ""

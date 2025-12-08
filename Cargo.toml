@@ -4,13 +4,25 @@ version = "0.1.0"
 edition = "2021"
 
 [workspace]
-members = [
-    "./migration/src/lib.rs",
+exclude = [
+    "migration/src/lib.rs",
+    "order-service",
+    "product-service",
+    "order-service/migration/src/lib.rs",
+    "product-service/migration/src/lib.rs",
 ]
 
 [[bin]]
 name = "app"
 path = "src/bin/main.rs"
+
+[[bin]]
+name = "order-service"
+path = "order-service/src/bin/main.rs"
+
+[[bin]]
+name = "product-service"
+path = "product-service/src/bin/main.rs"
 
 # [[bin]]
 # name = "administration gRPC server"
@@ -53,7 +65,7 @@ validator = { version = "0.20.0", features = ["derive"] }
 # --- 🗄️ Database / ORM ---
 sqlx = { version = "=0.6.3", features = ["runtime-tokio-rustls", "postgres"] }
 sea-orm = { version = "2.0.0-rc.19", features = ["sqlx-postgres", "runtime-tokio-rustls", "debug-print", "macros"] }
-sea-orm-migration = { version = "=1.1.10", features = ["default"] }
+sea-orm-migration = { version = "=2.0.0-rc.20", features = ["default"] }
 
 # --- 🧠 Redis Clients ---
 redis = { version = "0.27.6", features = ["tokio-comp"] }

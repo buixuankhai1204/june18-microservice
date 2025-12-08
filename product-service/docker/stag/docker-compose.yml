@@ -1,0 +1,55 @@
+version: "3.9"
+
+services:
+  uptop-be:
+    container_name: uptop-be-dev
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PROFILE: stag
+    networks:
+      - uptop-stag-net
+    env_file: ./.env
+    depends_on:
+      - postgres-db
+      - redis-db
+    volumes:
+      - app_data:/logs
+  postgres-db:
+    image: "postgres:latest"
+    container_name: uptop-postgres-dev
+    restart: unless-stopped
+    networks:
+      - uptop-stag-net
+    environment:
+      - POSTGRES_USER=${APP__DB__USERNAME}
+      - POSTGRES_PASSWORD=${APP__DB__PASSWORD}
+      - POSTGRES_DB=${APP__DB__DATABASE_NAME}
+      - POSTGRES_HOST=${APP__DB__HOST}
+    ports:
+      - "${APP_DB__PORT}:${APP_DB__PORT}"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+  redis-db:
+    image: "redis:latest"
+    container_name: uptop-redis-dev
+    restart: unless-stopped
+    networks:
+      - uptop-stag-net
+    environment:
+      - REDIS_USER=${APP__REDIS__USERNAME}
+      - REDIS_PASSWORD=${APP__REDIS__PASSWORD}
+      - REDIS_DB=${APP__REDIS__DATABASE_NAME}
+    ports:
+      - "${APP__REDIS__PORT}:${APP__REDIS__PORT}"
+
+networks:
+  uptop-stag-net:
+
+volumes:
+  app_data:
+    external: true
+  pg_data:
+    external: true

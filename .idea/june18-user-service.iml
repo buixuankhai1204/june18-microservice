@@ -5,6 +5,16 @@
       <sourceFolder url="file://$MODULE_DIR$/migration/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/order-service/migration/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/order-service/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/order-service/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/product-service/migration/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/product-service/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/product-service/tests" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/order-service/migration/target" />
+      <excludeFolder url="file://$MODULE_DIR$/order-service/target" />
+      <excludeFolder url="file://$MODULE_DIR$/product-service/migration/target" />
+      <excludeFolder url="file://$MODULE_DIR$/product-service/target" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />

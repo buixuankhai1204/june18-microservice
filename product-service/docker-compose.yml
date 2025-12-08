@@ -1,0 +1,72 @@
+version: '3.9'
+
+services:
+  #  rustapp:
+  #    container_name: app
+  #    image: buixuankhai1204/app:latest
+  #    ports:
+  #      - '3001:3000'
+  #    networks:
+  #      - erp_backend_network
+  #    volumes:
+  #      - ./settings:/app/settings
+  #      - ./static:/app/static
+  posgres:
+    container_name: db
+    restart: always
+    image: postgres:12
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Bxk180621
+      POSTGRES_DB: erp_broadcom
+    ports:
+      - '5432:5432'
+    networks:
+      - erp_backend_network
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+  redis:
+    container_name: redis
+    image: redis:latest
+    restart: always
+    ports:
+      - '6379:6379'
+    networks:
+      - erp_backend_network
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.2
+    restart: always
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+  kafka:
+    image: confluentinc/cp-kafka:7.3.2
+    restart: always
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+#  caddy:
+#    container_name: caddy
+#    image: caddy:latest
+#    ports:
+#      - '80:80'
+#      - '443:443'
+#    networks:
+#      - backend
+#    volumes:
+#      - ./Caddyfile:/etc/caddy/Caddyfile
+volumes:
+  pgdata: { }
+networks:
+  erp_backend_network:
+    driver: bridge
+
+
