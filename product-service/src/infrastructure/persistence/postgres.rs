@@ -1,8 +1,7 @@
 use crate::core::configure::app::AppConfig;
 use crate::core::error::AppResult;
-use migration;
+use product_migration;
 use sea_orm::{ConnectOptions, Database, DatabaseConnection};
-use sea_orm_migration::MigratorTrait;
 use std::time::Duration;
 pub type DatabaseClient = DatabaseConnection;
 

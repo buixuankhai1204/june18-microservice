@@ -200,7 +200,7 @@ The test database is automatically created and migrated by `setup_test_db.sh`:
 psql -U postgres -c "CREATE DATABASE erp_test;"
 
 # Run migrations
-cd migration
+cd user-migration
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/erp_test cargo run -- up
 ```
 

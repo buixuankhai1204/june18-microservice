@@ -17,11 +17,13 @@ path = "src/bin/main.rs"
 
 # [[bin]]
 # name = "migrations"
-# path = "./migration"
+# path = "./user-migration"
 
 [dependencies]
 # --- 🌐 Web Framework & Routing ---
 axum = "0.8.3"
+order-migration = { path = "./order-migration" }
+
 
 axum-extra = { version = "0.10.1", features = ["query", "typed-header", "multipart"] }
 tokio = { version = "1.42.0", features = ["full"] }

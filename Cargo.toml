@@ -4,16 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [workspace]
-exclude = [
-    "migration/src/lib.rs",
-    "order-service",
-    "product-service",
-    "order-service/migration/src/lib.rs",
-    "product-service/migration/src/lib.rs",
-]
+exclude = ["user_migration/src/lib.rs", "order-service", "product-service", "order-service/order-migration/src/lib.rs", "product-service/product-migration/src/lib.rs"]
 
 [[bin]]
-name = "app"
+name = "api-gateway"
 path = "src/bin/main.rs"
 
 [[bin]]
@@ -34,13 +28,15 @@ path = "product-service/src/bin/main.rs"
 
 # [[bin]]
 # name = "migrations"
-# path = "./migration"
+# path = "./user-migration"
 
 [features]
 multitenancy_fallback = []
 
 [dependencies]
-migration = { path = "./migration" }
+user_migration = { path = "user_migration" }
+product-service = { path = "./product-service" }
+order-service = { path = "./order-service" }
 
 # --- 🌐 Web Framework & Routing ---
 axum = "0.8.3"

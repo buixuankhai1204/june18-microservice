@@ -1,11 +1,10 @@
 use argon2::password_hash::SaltString;
 use argon2::{Argon2, PasswordHasher};
-use erp_backend::core::error::{AppError, AppResult};
-use erp_backend::core::http::server::AppServer;
-use erp_backend::util::constant::CONFIG;
 use log::{error, info, LevelFilter};
 use rand::rngs::OsRng;
-
+use order_service::core::error::AppResult;
+use order_service::core::http::server::AppServer;
+use order_service::util::constant::CONFIG;
 fn generate_admin_password() -> String {
     let password = "admin123";
     let salt = SaltString::generate(&mut OsRng);

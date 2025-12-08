@@ -23,8 +23,8 @@ COPY settings settings
 # copy app bin
 COPY --from=builder /workspace/target/release/app .
 
-# copy migration bin
-#COPY --from=builder /workspace/target/release/migration .
+# copy user-migration bin
+#COPY --from=builder /workspace/target/release/user-migration .
 
 # expose port
 EXPOSE 3030

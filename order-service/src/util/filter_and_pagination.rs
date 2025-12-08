@@ -1,5 +1,5 @@
 use chrono::NaiveDateTime;
-use migration::{Expr, SimpleExpr};
+use order_migration::{Expr, SimpleExpr};
 use sea_orm::{EntityTrait, QueryOrder, QuerySelect, QueryTrait, Select};
 use serde::{Deserialize, Serialize};
 use strum::Display;

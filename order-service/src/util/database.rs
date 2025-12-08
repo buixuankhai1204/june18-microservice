@@ -3,7 +3,7 @@ use crate::core::error::{AppError, AppResult};
 use crate::infrastructure::persistence::postgres::{DatabaseClient, DatabaseClientExt};
 use crate::util;
 use log::{error, info};
-use migration::{Alias, Iden, IntoIden, SelectExpr, SelectStatement};
+use order_migration::{Alias, Iden, IntoIden, SelectExpr, SelectStatement};
 use sea_orm::SqlxError::Database;
 use sea_orm::{ColumnTrait, ConnectionTrait, DatabaseBackend, DatabaseConnection, DbErr, EntityTrait, QueryResult, QueryTrait, RuntimeErr, Statement};
 use std::borrow::Cow;

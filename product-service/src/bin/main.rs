@@ -1,9 +1,9 @@
 use argon2::password_hash::SaltString;
 use argon2::{Argon2, PasswordHasher};
-use erp_backend::core::error::{AppError, AppResult};
-use erp_backend::core::http::server::AppServer;
-use erp_backend::util::constant::CONFIG;
 use log::{error, info, LevelFilter};
+use product_service::core::error::AppResult;
+use product_service::core::http::server::AppServer;
+use product_service::util::constant::CONFIG;
 use rand::rngs::OsRng;
 
 fn generate_admin_password() -> String {

@@ -5,30 +5,18 @@ edition = "2021"
 
 #[workspace]
 #members = [
-#    "./migration/src/lib.rs", "order-service", "product-service",
+#    "./user-migration/src/lib.rs", "order-service", "product-service",
 #]
 
 [[bin]]
 name = "product-service"
 path = "src/bin/main.rs"
 
-# [[bin]]
-# name = "administration gRPC server"
-# path = "src/bin/administration.rs"
-
-# [[bin]]
-# name = "traffic gRPC server"
-# path = "src/bin/traffic.rs"
-
-# [[bin]]
-# name = "migrations"
-# path = "./migration"
-
 [features]
 multitenancy_fallback = []
 
 [dependencies]
-# migration = { path = "./migration" }
+ product-migration = { path = "./product-migration" }
 
 # --- 🌐 Web Framework & Routing ---
 axum = "0.8.3"
