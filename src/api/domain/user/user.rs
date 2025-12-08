@@ -1,9 +1,11 @@
 use crate::core::app_state::AppState;
 use crate::core::response::{ClientResponseError, EntityResponse};
 use crate::application::user::user_service_interface::UserServiceInterface;
-use crate::presentation::user::user::{UserSerializer, CreateUserRequest, UpdateUserRequest};
+use crate::application::user::user_command::RegisterUserCommand;
+use crate::presentation::user::user::{UserSerializer, CreateUserRequest, UpdateUserRequest, UserCreatedSerializer};
 use axum::extract::{Path, Query, State};
 use axum::Json;
+use axum::http::StatusCode;
 use log::error;
 use sea_orm::TransactionTrait;
 use serde::Deserialize;
@@ -89,6 +91,46 @@ fn default_page() -> u64 {
 
 fn default_page_size() -> u64 {
     10
+}
+
+#[utoipa::path(
+    post,
+    path = "/v1/auth/register",
+    tags = ["user_service"],
+    request_body = RegisterUserCommand,
+    responses(
+        (status = 201, description = "User registered successfully", body = EntityResponse<UserCreatedSerializer>),
+        (status = 400, description = "Bad request - validation failed", body = ClientResponseError),
+        (status = 409, description = "Conflict - email or phone already exists", body = ClientResponseError),
+        (status = 500, description = "Internal server error", body = ClientResponseError)
+    )
+)]
+pub async fn controller_register_user(
+    State(state): State<AppState>,
+    Json(command): Json<RegisterUserCommand>,
+) -> Result<(StatusCode, Json<EntityResponse<UserCreatedSerializer>>), crate::infrastructure::error::AppError> {
+    log::info!("Registering user with email: {}", command.email);
+    let tx = state.db.begin().await?;
+
+    match state.user_service.register_user(&tx, command).await {
+        Ok(result) => {
+            tx.commit().await?;
+            log::info!("User registered successfully: {}", result.user_id);
+            Ok((
+                StatusCode::CREATED,
+                Json(EntityResponse {
+                    message: "User registered successfully.".to_string(),
+                    data: Some(result),
+                    total: 1,
+                }),
+            ))
+        }
+        Err(err) => {
+            tx.rollback().await?;
+            log::error!("Failed to register user: {err:?}");
+            Err(err)
+        }
+    }
 }
 
 #[utoipa::path(

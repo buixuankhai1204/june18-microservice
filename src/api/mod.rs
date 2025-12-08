@@ -12,7 +12,9 @@ pub fn build_routes() -> OpenApiRouter<AppState> {
         .routes(routes!(domain::server::health_check));
 
     let auth_routes =
-        OpenApiRouter::new().routes(routes!(domain::auth::auth::controller_login_by_email));
+        OpenApiRouter::new()
+        .routes(routes!(domain::auth::auth::controller_login_by_email))
+        .routes(routes!(domain::user::user::controller_register_user));
 
     let user_routes = OpenApiRouter::new()
         .routes(routes!(domain::user::user::controller_get_profile))

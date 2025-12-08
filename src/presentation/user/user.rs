@@ -43,6 +43,13 @@ impl From<UserModel> for UserSerializer {
 }
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone)]
+pub struct UserCreatedSerializer {
+    pub user_id: String,
+    pub email: String,
+    pub message: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, ToSchema, Clone)]
 pub struct CreateUserRequest {
     pub avatar: Option<String>,
     pub first_name: String,

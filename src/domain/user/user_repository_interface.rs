@@ -13,5 +13,6 @@ pub trait UserRepositoryInterface: Send + Sync {
     async fn delete_user(conn: &DatabaseTransaction, id: i64) -> AppResult<()>;
     async fn username_exists(conn: &DatabaseTransaction, username: &str) -> AppResult<bool>;
     async fn email_exists(conn: &DatabaseTransaction, email: &str) -> AppResult<bool>;
+    async fn phone_exists(conn: &DatabaseTransaction, phone: &str) -> AppResult<bool>;
     async fn list_users(conn: &DatabaseTransaction, page: u64, page_size: u64) -> AppResult<Vec<user::Model>>;
 }

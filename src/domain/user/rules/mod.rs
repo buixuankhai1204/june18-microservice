@@ -1,8 +1,20 @@
 pub(crate) mod user_must_not_an_employee_before_become_an_employee;
 pub mod email_must_be_unique;
+pub mod email_must_be_valid;
 pub mod username_must_be_unique;
 pub mod user_must_have_at_least_one_address;
+pub mod password_must_meet_requirements;
+pub mod phone_must_be_unique;
+pub mod phone_must_be_valid;
+pub mod user_must_be_at_least_age;
+pub mod full_name_must_be_valid;
 
 pub use email_must_be_unique::EmailMustBeUnique;
+pub use email_must_be_valid::EmailMustBeValid;
 pub use username_must_be_unique::UsernameMustBeUnique;
 pub use user_must_have_at_least_one_address::UserMustHaveAtLeastOneAddress;
+pub use password_must_meet_requirements::PasswordMustMeetRequirements;
+pub use phone_must_be_unique::PhoneMustBeUnique;
+pub use phone_must_be_valid::PhoneMustBeValid;
+pub use user_must_be_at_least_age::UserMustBeAtLeastAge;
+pub use full_name_must_be_valid::FullNameMustBeValid;

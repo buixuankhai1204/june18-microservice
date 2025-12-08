@@ -22,8 +22,13 @@ pub struct Model {
     pub address: HasMany<super::super::address::address::Entity>,
     pub phone_number: Option<String>,
     pub status: Status,
+    pub role: Role,
     pub is_deleted: bool,
+    pub verification_token: Option<String>,
+    pub verification_token_expiry: Option<NaiveDateTime>,
+    pub email_verified_at: Option<NaiveDateTime>,
     pub created_at: Option<NaiveDateTime>,
+    pub updated_at: Option<NaiveDateTime>,
     pub deleted_at: Option<NaiveDateTime>,
 }
 
@@ -31,10 +36,22 @@ pub struct Model {
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::N(10))")]
 #[derive(PartialEq)]
 pub enum Status {
+    #[sea_orm(string_value = "pending")]
+    PENDING,
     #[sea_orm(string_value = "active")]
     ACTIVE,
     #[sea_orm(string_value = "inactive")]
     INACTIVE,
+}
+
+#[derive(EnumIter, DeriveActiveEnum, Clone, Debug, Deserialize, Serialize, utoipa::ToSchema)]
+#[sea_orm(rs_type = "String", db_type = "String(StringLen::N(20))")]
+#[derive(PartialEq)]
+pub enum Role {
+    #[sea_orm(string_value = "customer")]
+    CUSTOMER,
+    #[sea_orm(string_value = "admin")]
+    ADMIN,
 }
 
 
@@ -42,6 +59,55 @@ impl ActiveModelBehavior for ActiveModel {}
 
 // Domain Business Rules - Create and validate Models
 impl ModelEx {
+    /// Business Rule: Create a new user for registration
+    pub fn create_user_for_registration(
+        email: String,
+        password: String,
+        full_name: String,
+        phone_number: Option<String>,
+        date_of_birth: Option<NaiveDate>,
+    ) -> AppResult<Self> {
+        // Parse full_name into first_name and last_name
+        let name_parts: Vec<&str> = full_name.trim().split_whitespace().collect();
+        let (first_name, last_name) = if name_parts.is_empty() {
+            return Err(AppError::BadRequestError("Full name cannot be empty".to_string()));
+        } else if name_parts.len() == 1 {
+            (name_parts[0].to_string(), "".to_string())
+        } else {
+            let first = name_parts[0].to_string();
+            let last = name_parts[1..].join(" ");
+            (first, last)
+        };
+
+        // Generate username from email (part before @)
+        let username = email.split('@').next()
+            .ok_or_else(|| AppError::BadRequestError("Invalid email format".to_string()))?
+            .to_string();
+
+        // Create and return the user model
+        Ok(Self {
+            id: 0, // Will be set by the database
+            avatar: None,
+            first_name,
+            last_name,
+            username,
+            email,
+            password: Some(password), // Will be hashed before saving
+            birth_of_date: date_of_birth,
+            address: Default::default(),
+            phone_number,
+            status: Status::PENDING,
+            role: Role::CUSTOMER,
+            is_deleted: false,
+            verification_token: None, // Will be set during registration
+            verification_token_expiry: None,
+            email_verified_at: None,
+            created_at: Some(Utc::now().naive_utc()),
+            updated_at: Some(Utc::now().naive_utc()),
+            deleted_at: None,
+        })
+    }
+
     /// Business Rule: Create a new user model with validation
     pub fn create_new_user(
         request: &CreateUserRequest
@@ -75,10 +141,15 @@ impl ModelEx {
             birth_of_date: request.birth_of_date,
             address: Default::default(),
             phone_number: request.phone_number.clone(),
-            status: Status::ACTIVE,
+            status: Status::PENDING,
+            role: Role::CUSTOMER,
             is_deleted: false,
+            verification_token: None, // Will be set during registration
+            verification_token_expiry: None,
+            email_verified_at: None,
             created_at: Some(Utc::now().naive_utc()),
-            deleted_at: Some(Utc::now().naive_utc()),
+            updated_at: Some(Utc::now().naive_utc()),
+            deleted_at: None,
         })
     }
 

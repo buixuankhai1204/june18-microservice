@@ -92,6 +92,16 @@ impl UserRepositoryInterface for user::user::Entity {
         Ok(count > 0)
     }
 
+    async fn phone_exists(conn: &DatabaseTransaction, phone: &str) -> AppResult<bool> {
+        use sea_orm::EntityTrait;
+        let count = user::user::Entity::find()
+            .filter(user::user::Column::PhoneNumber.eq(phone))
+            .filter(user::user::Column::IsDeleted.eq(false))
+            .count(conn)
+            .await?;
+        Ok(count > 0)
+    }
+
     async fn list_users(
         conn: &DatabaseTransaction,
         page: u64,

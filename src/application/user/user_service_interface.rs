@@ -1,8 +1,15 @@
-use crate::presentation::user::user::{UserSerializer, CreateUserRequest, UpdateUserRequest};
+use crate::presentation::user::user::{UserSerializer, CreateUserRequest, UpdateUserRequest, UserCreatedSerializer};
+use crate::application::user::user_command::RegisterUserCommand;
 use sea_orm::DatabaseTransaction;
 use crate::infrastructure::error::AppResult;
 
 pub trait UserServiceInterface: Send + Sync + 'static {
+    async fn register_user(
+        &self,
+        conn: &DatabaseTransaction,
+        command: RegisterUserCommand,
+    ) -> AppResult<UserCreatedSerializer>;
+
     async fn create_user(
         &self,
         conn: &DatabaseTransaction,

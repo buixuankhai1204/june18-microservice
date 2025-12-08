@@ -4,6 +4,18 @@ use utoipa::ToSchema;
 use validator::Validate;
 
 #[derive(Debug, Deserialize, Serialize, Validate, ToSchema)]
+pub struct RegisterUserCommand {
+    #[validate(email)]
+    pub email: String,
+    #[validate(length(min = 8, message = "Password must be at least 8 characters"))]
+    pub password: String,
+    #[validate(length(min = 1, max = 100, message = "Full name must be between 1 and 100 characters"))]
+    pub full_name: String,
+    pub phone_number: Option<String>,
+    pub date_of_birth: Option<NaiveDate>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Validate, ToSchema)]
 pub struct AdminCreateUserCommand {
     #[validate(email)]
     pub email: String,

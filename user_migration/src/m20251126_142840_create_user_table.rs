@@ -20,9 +20,14 @@ impl MigrationTrait for Migration {
                     .col(string_null(Users::Password))
                     .col(date_null(Users::BirthOfDate))
                     .col(string_null(Users::PhoneNumber))
-                    .col(string(Users::Status).default("active".to_string()))
+                    .col(string(Users::Status).default("pending".to_string()))
+                    .col(string(Users::Role).default("customer".to_string()))
                     .col(boolean(Users::IsDeleted).default(false))
+                    .col(string_null(Users::VerificationToken))
+                    .col(timestamp_null(Users::VerificationTokenExpiry))
+                    .col(timestamp_null(Users::EmailVerifiedAt))
                     .col(timestamp_null(Users::CreatedAt))
+                    .col(timestamp_null(Users::UpdatedAt))
                     .col(timestamp_null(Users::DeletedAt))
                     .to_owned(),
             )
@@ -49,7 +54,12 @@ pub enum Users {
     BirthOfDate,
     PhoneNumber,
     Status,
+    Role,
     IsDeleted,
+    VerificationToken,
+    VerificationTokenExpiry,
+    EmailVerifiedAt,
     CreatedAt,
+    UpdatedAt,
     DeletedAt,
 }
