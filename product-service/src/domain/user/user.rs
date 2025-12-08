@@ -3,7 +3,6 @@ use sea_orm::entity::prelude::*;
 use sea_orm::{ActiveModelBehavior, ActiveModelTrait, EnumIter};
 use serde::{Deserialize, Serialize};
 use crate::core::error::{AppError, AppResult};
-use crate::presentation::user::user::{CreateUserRequest, UpdateUserRequest};
 
 #[sea_orm::model]
 #[derive(Clone, Debug, DeriveEntityModel, Serialize, Deserialize)]

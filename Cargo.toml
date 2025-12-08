@@ -15,21 +15,13 @@ members = [
 name = "api-gateway"
 path = "src/bin/main.rs"
 
-[[bin]]
-name = "order-service"
-path = "order-service/src/bin/main.rs"
-
-[[bin]]
-name = "product-service"
-path = "product-service/src/bin/main.rs"
-
 [workspace.dependencies]
 utils = { path = "src/utils" }
 
 
 [dependencies]
 user_migration = { path = "user_migration" }
-
+utils = {path = "src/utils"}
 # --- 🌐 Web Framework & Routing ---
 axum = "0.8.3"
 
@@ -47,7 +39,7 @@ utoipa-swagger-ui = { version = "9.0.0", features = ["axum"] }
 
 # --- 🛡️ Auth, Security ---
 argon2 = "0.5.3"
-jsonwebtoken = { version = "10.1.0", features = ["default"] }
+jsonwebtoken = { version = "10.1.0", features = ["rust_crypto"] }
 validator = { version = "0.20.0", features = ["derive"] }
 
 # --- 🗄️ Database / ORM ---

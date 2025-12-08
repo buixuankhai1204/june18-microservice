@@ -1,7 +1,6 @@
 use crate::core::error::{AppError, AppResult};
 use crate::domain::address::address::{ActiveModel, ActiveModelEx, Column, Entity, Model, ModelEx};
 use crate::domain::address::address_repository_interface::AddressRepositoryInterface;
-use crate::domain::user;
 use async_trait::async_trait;
 use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseTransaction, EntityLoaderTrait, EntityTrait, ExprTrait, QueryFilter, Set};
 
@@ -27,7 +26,6 @@ impl AddressRepositoryInterface for Entity {
     async fn find_address_by_id(conn: &DatabaseTransaction, id: i64) -> AppResult<Option<ModelEx>> {
         let address = Entity::load()
             .filter_by_id(id)
-            .with(user::user::Entity)
             .one(conn)
             .await?;
         Ok(address)
@@ -57,7 +55,6 @@ impl AddressRepositoryInterface for Entity {
                     .eq(user_id)
                     .and(Column::IsDeleted.eq(false)),
             )
-            .with(user::user::Entity)
             .all(conn)
             .await
             .map_err(|e| AppError::DatabaseError(e));

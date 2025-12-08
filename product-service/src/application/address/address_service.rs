@@ -2,12 +2,11 @@ use crate::application::address::address_service_interface::AddressServiceInterf
 use crate::core::error::{AppError, AppResult};
 use crate::domain::address::address::Entity;
 use crate::domain::address::address_repository_interface::AddressRepositoryInterface;
-use crate::domain::user::user_repository_interface::UserRepositoryInterface;
-use crate::infrastructure::third_party::redis::lib::RedisConnectionPool;
 use crate::presentation::address::address::{AddressSerializer, CreateAddressRequest, UpdateAddressRequest};
 use rdkafka::producer::FutureProducer;
 use sea_orm::{DatabaseTransaction, IntoActiveModel};
 use std::sync::Arc;
+use utils::redis_client::RedisConnectionPool;
 use crate::domain::address;
 
 /// Application service - orchestrates domain logic, database, and external services
@@ -28,13 +27,6 @@ impl AddressServiceInterface for AddressService {
         conn: &DatabaseTransaction,
         request: CreateAddressRequest,
     ) -> AppResult<bool> {
-        // Database: Check if user exists
-        let user = crate::domain::user::user::Entity::find_user_by_id(conn, request.user_id).await?;
-        if user.is_none() {
-            return Err(AppError::EntityNotFoundError {
-                detail: format!("User with id {} not found", request.user_id),
-            });
-        }
 
         // Domain: Create model with validation
         let address = address::address::ModelEx::create_new_address(

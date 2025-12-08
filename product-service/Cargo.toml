@@ -3,10 +3,6 @@ name = "product-service"
 version = "0.1.0"
 edition = "2021"
 
-#[workspace]
-#members = [
-#    "./user-migration/src/lib.rs", "order-service", "product-service",
-#]
 
 [[bin]]
 name = "product-service"

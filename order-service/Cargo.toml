@@ -7,12 +7,13 @@ edition = "2021"
 name = "order-service"
 path = "src/bin/main.rs"
 
+[lib]
+
 [dependencies]
 # --- 🌐 Web Framework & Routing ---
 axum = "0.8.3"
 order-migration = { path = "./order-migration" }
-utils = {path = "../src/utils"}
-
+utils = {workspace = true}
 
 axum-extra = { version = "0.10.1", features = ["query", "typed-header", "multipart"] }
 tokio = { version = "1.42.0", features = ["full"] }

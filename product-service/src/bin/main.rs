@@ -2,9 +2,8 @@ use argon2::password_hash::SaltString;
 use argon2::{Argon2, PasswordHasher};
 use log::{error, info, LevelFilter};
 use rand::rngs::OsRng;
-use api_gateway::core::http::server::AppServer;
-use api_gateway::infrastructure::constant::CONFIG;
-use api_gateway::infrastructure::error::AppResult;
+use product_service::core::error::AppResult;
+use product_service::core::http::server::AppServer;
 
 fn generate_admin_password() -> String {
     let password = "admin123";

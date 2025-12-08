@@ -5,9 +5,9 @@ use crate::core::configure::kafka::KafkaConfig;
 use crate::core::configure::redis::RedisConfig;
 use crate::core::configure::secret::SecretConfig;
 use crate::core::configure::server::ServerConfig;
-use crate::util::dir::get_project_root;
 use config::{ConfigError, Environment};
 use serde::{Deserialize, Serialize};
+use utils::dir::get_project_root;
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct AppConfig {

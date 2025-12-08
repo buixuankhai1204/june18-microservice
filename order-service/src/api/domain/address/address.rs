@@ -3,7 +3,6 @@ use crate::core::error::AppResult;
 use crate::core::response::{ClientResponseError, EntityResponse};
 use crate::application::address::address_service_interface::AddressServiceInterface;
 use crate::presentation::address::address::{AddressSerializer, CreateAddressRequest, UpdateAddressRequest};
-use crate::util::claim::UserClaims;
 use axum::extract::{Path, Query, State};
 use axum::Json;
 use log::error;
@@ -30,7 +29,6 @@ pub struct UserIdQuery {
 )]
 pub async fn controller_create_address(
     State(state): State<AppState>,
-    _claims: UserClaims,
     Json(request): Json<CreateAddressRequest>,
 ) -> AppResult<Json<EntityResponse<bool>>> {
     log::info!("Creating address for user_id: {}", request.user_id);
@@ -72,7 +70,6 @@ pub async fn controller_create_address(
 )]
 pub async fn controller_update_address(
     State(state): State<AppState>,
-    _claims: UserClaims,
     Path(id): Path<i64>,
     Json(request): Json<UpdateAddressRequest>,
 ) -> AppResult<Json<EntityResponse<bool>>> {
@@ -113,7 +110,6 @@ pub async fn controller_update_address(
 )]
 pub async fn controller_get_address_by_id(
     State(state): State<AppState>,
-    _claims: UserClaims,
     Path(id): Path<i64>,
 ) -> AppResult<Json<EntityResponse<AddressSerializer>>> {
     log::info!("Getting address with id: {}", id);
@@ -148,7 +144,6 @@ pub async fn controller_get_address_by_id(
 )]
 pub async fn controller_get_addresses_by_user_id(
     State(state): State<AppState>,
-    _claims: UserClaims,
     Query(params): Query<UserIdQuery>,
 ) -> AppResult<Json<EntityResponse<Vec<AddressSerializer>>>> {
     log::info!("Getting addresses for user_id: {}", params.user_id);
@@ -187,7 +182,6 @@ pub async fn controller_get_addresses_by_user_id(
 )]
 pub async fn controller_delete_address(
     State(state): State<AppState>,
-    _claims: UserClaims,
     Path(id): Path<i64>,
 ) -> AppResult<Json<EntityResponse<String>>> {
     log::info!("Deleting address with id: {}", id);

@@ -181,6 +181,7 @@ dependencies = [
  "tracing-subscriber",
  "tungstenite 0.28.0",
  "user_migration",
+ "utils",
  "utoipa",
  "utoipa-axum",
  "utoipa-swagger-ui",
