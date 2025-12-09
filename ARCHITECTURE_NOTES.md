@@ -319,15 +319,25 @@ let event = UserRegisteredEvent::new(
 
 ### Database Schema Evolution
 
-**Fields Added for FR-US-002**:
+**Migration File**: `user_migration/src/m20251209_000000_add_email_verification_resend_tracking.rs`
+
+**Fields Added for FR-US-002** (ALTER TABLE migration):
 ```sql
-verification_resend_count INTEGER DEFAULT 0 NOT NULL,
-last_verification_resend_at TIMESTAMP NULL
+ALTER TABLE users
+ADD COLUMN verification_resend_count INTEGER DEFAULT 0 NOT NULL;
+
+ALTER TABLE users
+ADD COLUMN last_verification_resend_at TIMESTAMP NULL;
 ```
 
 **Purpose**:
 - `verification_resend_count`: Tracks resends within current window
 - `last_verification_resend_at`: Enables auto-reset logic (>1 hour check)
+
+**Migration Strategy**:
+- ✅ Used ALTER TABLE for existing databases (not CREATE TABLE)
+- ✅ Includes rollback support via `down()` method
+- ✅ Run with: `cd user_migration && cargo run -- up`
 
 ### File Structure for FR-US-002
 

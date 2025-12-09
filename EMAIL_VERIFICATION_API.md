@@ -279,22 +279,48 @@ Content-Type: application/json
 
 ## Database Schema Updates
 
+### Migration File
+**Location**: `user_migration/src/m20251209_000000_add_email_verification_resend_tracking.rs`
+
+This migration adds support for rate limiting verification email resends.
+
 ### Table: `users`
 
-**New Fields Added**:
+**New Fields Added (ALTER TABLE)**:
 ```sql
+ALTER TABLE users
+ADD COLUMN verification_resend_count INTEGER DEFAULT 0 NOT NULL;
+
+ALTER TABLE users
+ADD COLUMN last_verification_resend_at TIMESTAMP NULL;
+```
+
+**Purpose**:
+- `verification_resend_count`: Tracks number of resend requests within current 1-hour window
+- `last_verification_resend_at`: Timestamp of last resend request, enables auto-reset logic
+
+**Complete Verification-Related Fields** (from all migrations):
+```sql
+-- From m20251126_142840_create_user_table.rs
+verification_token VARCHAR NULL,
+verification_token_expiry TIMESTAMP NULL,
+email_verified_at TIMESTAMP NULL,
+status VARCHAR(10) DEFAULT 'pending' NOT NULL,
+
+-- From m20251209_000000_add_email_verification_resend_tracking.rs
 verification_resend_count INTEGER DEFAULT 0 NOT NULL,
 last_verification_resend_at TIMESTAMP NULL
 ```
 
-**Complete Verification-Related Fields**:
-```sql
-verification_token VARCHAR NULL,
-verification_token_expiry TIMESTAMP NULL,
-email_verified_at TIMESTAMP NULL,
-verification_resend_count INTEGER DEFAULT 0 NOT NULL,
-last_verification_resend_at TIMESTAMP NULL,
-status VARCHAR(10) DEFAULT 'pending' NOT NULL
+### Running Migrations
+
+```bash
+# Run all pending migrations
+cd user_migration
+cargo run -- up
+
+# Or rollback the resend tracking migration
+cargo run -- down
 ```
 
 ---
