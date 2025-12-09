@@ -2,6 +2,8 @@ use chrono::{NaiveDate, NaiveDateTime, Utc};
 use sea_orm::entity::prelude::*;
 use sea_orm::{ActiveModelBehavior, ActiveModelTrait, EnumIter};
 use serde::{Deserialize, Serialize};
+use crate::api::domain::business_rule_interface::BusinessRuleInterface;
+use crate::domain::user::rules::{UserMustNotBeAlreadyVerified, VerificationTokenMustNotBeExpired};
 use crate::infrastructure::error::{AppError, AppResult};
 use crate::presentation::user::user::{CreateUserRequest, UpdateUserRequest};
 
@@ -27,6 +29,8 @@ pub struct Model {
     pub verification_token: Option<String>,
     pub verification_token_expiry: Option<NaiveDateTime>,
     pub email_verified_at: Option<NaiveDateTime>,
+    pub verification_resend_count: i32,
+    pub last_verification_resend_at: Option<NaiveDateTime>,
     pub created_at: Option<NaiveDateTime>,
     pub updated_at: Option<NaiveDateTime>,
     pub deleted_at: Option<NaiveDateTime>,
@@ -60,6 +64,7 @@ impl ActiveModelBehavior for ActiveModel {}
 // Domain Business Rules - Create and validate Models
 impl ModelEx {
     /// Business Rule: Create a new user for registration
+    /// Validates all business rules before creating the model
     pub fn create_user_for_registration(
         email: String,
         password: String,
@@ -67,6 +72,29 @@ impl ModelEx {
         phone_number: Option<String>,
         date_of_birth: Option<NaiveDate>,
     ) -> AppResult<Self> {
+        use crate::api::domain::business_rule_interface::BusinessRuleInterface;
+        use crate::domain::user::rules::*;
+
+        // Business Rule: Email must be valid
+        EmailMustBeValid { email: email.clone() }.check_broken()?;
+
+        // Business Rule: Password must meet requirements
+        PasswordMustMeetRequirements { password: password.clone() }.check_broken()?;
+
+        // Business Rule: Full name must be valid
+        FullNameMustBeValid { full_name: full_name.clone() }.check_broken()?;
+
+        // Business Rule: Phone must be valid if provided
+        if let Some(ref phone) = phone_number {
+            PhoneMustBeValid { phone: phone.clone() }.check_broken()?;
+        }
+
+        // Business Rule: User must be at least 13 years old
+        UserMustBeAtLeastAge {
+            date_of_birth,
+            minimum_age: 13,
+        }.check_broken()?;
+
         // Parse full_name into first_name and last_name
         let name_parts: Vec<&str> = full_name.trim().split_whitespace().collect();
         let (first_name, last_name) = if name_parts.is_empty() {
@@ -102,6 +130,8 @@ impl ModelEx {
             verification_token: None, // Will be set during registration
             verification_token_expiry: None,
             email_verified_at: None,
+            verification_resend_count: 0,
+            last_verification_resend_at: None,
             created_at: Some(Utc::now().naive_utc()),
             updated_at: Some(Utc::now().naive_utc()),
             deleted_at: None,
@@ -147,6 +177,8 @@ impl ModelEx {
             verification_token: None, // Will be set during registration
             verification_token_expiry: None,
             email_verified_at: None,
+            verification_resend_count: 0,
+            last_verification_resend_at: None,
             created_at: Some(Utc::now().naive_utc()),
             updated_at: Some(Utc::now().naive_utc()),
             deleted_at: None,
@@ -196,6 +228,67 @@ impl ModelEx {
         if let Some(ref status) = request.status {
             self.status = status.clone();
         }
+
+        Ok(self)
+    }
+
+    /// Business Rule: Verify user email
+    /// Validates business rules and transitions user from pending to active
+    pub fn verify_email(mut self) -> AppResult<Self> {
+
+        // Business Rule: User must not be already verified
+        UserMustNotBeAlreadyVerified {
+            email_verified_at: self.email_verified_at,
+        }.check_broken()?;
+
+        // Business Rule: Verification token must not be expired
+        VerificationTokenMustNotBeExpired {
+            token_expiry: self.verification_token_expiry,
+        }.check_broken()?;
+
+        // Update user status and verification fields
+        self.status = Status::ACTIVE;
+        self.email_verified_at = Some(Utc::now().naive_utc());
+        self.verification_token = None; // Invalidate token
+        self.verification_token_expiry = None;
+        self.updated_at = Some(Utc::now().naive_utc());
+
+        Ok(self)
+    }
+
+    /// Business Rule: Prepare for verification email resend
+    pub fn prepare_resend_verification(mut self, new_token: String, new_expiry: NaiveDateTime) -> AppResult<Self> {
+        use crate::api::domain::business_rule_interface::BusinessRuleInterface;
+        use crate::domain::user::rules::*;
+
+        // Business Rule: User must not be already verified
+        UserMustNotBeAlreadyVerified {
+            email_verified_at: self.email_verified_at,
+        }.check_broken()?;
+
+        let now = Utc::now().naive_utc();
+
+        // Reset counter if more than 1 hour has passed since last resend
+        if let Some(last_resend) = self.last_verification_resend_at {
+            let one_hour_ago = now - chrono::Duration::hours(1);
+            if last_resend <= one_hour_ago {
+                self.verification_resend_count = 0;
+            }
+        }
+
+        // Business Rule: Resend limit must not be exceeded (max 3 per hour)
+        VerificationResendLimitMustNotBeExceeded {
+            resend_count: self.verification_resend_count,
+            last_resend_at: self.last_verification_resend_at,
+            max_resends_per_hour: 3,
+        }.check_broken()?;
+
+        // Update verification token and tracking fields
+        self.verification_token = Some(new_token);
+        self.verification_token_expiry = Some(new_expiry);
+        self.verification_resend_count += 1;
+        self.last_verification_resend_at = Some(now);
+        self.updated_at = Some(now);
 
         Ok(self)
     }

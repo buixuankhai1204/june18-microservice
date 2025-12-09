@@ -8,6 +8,10 @@ pub mod phone_must_be_unique;
 pub mod phone_must_be_valid;
 pub mod user_must_be_at_least_age;
 pub mod full_name_must_be_valid;
+pub mod verification_token_must_exist;
+pub mod verification_token_must_not_be_expired;
+pub mod user_must_not_be_already_verified;
+pub mod verification_resend_limit_must_not_be_exceeded;
 
 pub use email_must_be_unique::EmailMustBeUnique;
 pub use email_must_be_valid::EmailMustBeValid;
@@ -18,3 +22,7 @@ pub use phone_must_be_unique::PhoneMustBeUnique;
 pub use phone_must_be_valid::PhoneMustBeValid;
 pub use user_must_be_at_least_age::UserMustBeAtLeastAge;
 pub use full_name_must_be_valid::FullNameMustBeValid;
+pub use verification_token_must_exist::VerificationTokenMustExist;
+pub use verification_token_must_not_be_expired::VerificationTokenMustNotBeExpired;
+pub use user_must_not_be_already_verified::UserMustNotBeAlreadyVerified;
+pub use verification_resend_limit_must_not_be_exceeded::VerificationResendLimitMustNotBeExceeded;

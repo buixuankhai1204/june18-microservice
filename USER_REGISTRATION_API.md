@@ -77,21 +77,16 @@ Content-Type: application/json
 
 ### Processing Flow
 
-1. **Input Validation**
-   - Email format validation
-   - Password complexity validation
-   - Full name length validation
-   - Phone number format validation (if provided)
-   - Age validation (if date_of_birth provided)
-
-2. **Business Rules Validation**
-   - `EmailMustBeValid`: Validates email format using regex
+1. **Application Layer - Database-Dependent Business Rules**
    - `EmailMustBeUnique`: Checks email uniqueness in database
-   - `PasswordMustMeetRequirements`: Validates password complexity
-   - `FullNameMustBeValid`: Validates full name length and format
+   - `PhoneMustBeUnique`: Checks phone uniqueness in database (if provided)
+
+2. **Domain Layer - Business Rules Validation** (enforced in `ModelEx::create_user_for_registration`)
+   - `EmailMustBeValid`: Validates email format using regex
+   - `PasswordMustMeetRequirements`: Validates password complexity (8+ chars, uppercase, lowercase, number, special char)
+   - `FullNameMustBeValid`: Validates full name length (max 100 chars) and format
    - `PhoneMustBeValid`: Validates phone format (if provided)
-   - `PhoneMustBeUnique`: Checks phone uniqueness (if provided)
-   - `UserMustBeAtLeastAge`: Validates minimum age of 13 years
+   - `UserMustBeAtLeastAge`: Validates minimum age of 13 years (if date_of_birth provided)
 
 3. **User Creation**
    - Parse full_name into first_name and last_name
@@ -117,21 +112,32 @@ Content-Type: application/json
 
 ### Architecture Implementation
 
+> **🏗️ Architecture Note**: This implementation follows **Domain-Driven Design (DDD)** principles:
+> - **Domain Layer** (`src/domain/user/user.rs`): Business rules that don't require external dependencies (database, external services) are enforced directly in the domain model's `create_user_for_registration()` method.
+> - **Application Layer** (`src/application/user/user_service.rs`): Business rules that require database access (uniqueness checks) are validated in the application service before delegating to the domain layer.
+> - This ensures the domain layer remains pure and testable without external dependencies.
+
 #### Domain Layer
 **Location**: `src/domain/user/`
 
 - **Model**: `user.rs`
   - `ModelEx::create_user_for_registration()`: Creates user domain model
+    - **Enforces business rules internally** (EmailMustBeValid, PasswordMustMeetRequirements, FullNameMustBeValid, PhoneMustBeValid, UserMustBeAtLeastAge)
+    - Parses full_name into first_name and last_name
+    - Generates username from email
+    - Sets default values (status=PENDING, role=CUSTOMER)
   - Enums: `Status`, `Role`
 
 - **Business Rules**: `rules/`
-  - `EmailMustBeValid`
-  - `EmailMustBeUnique`
-  - `PasswordMustMeetRequirements`
-  - `FullNameMustBeValid`
-  - `PhoneMustBeValid`
-  - `PhoneMustBeUnique`
-  - `UserMustBeAtLeastAge`
+  - **Domain-Level Rules** (no database dependency):
+    - `EmailMustBeValid`: Email format validation
+    - `PasswordMustMeetRequirements`: Password complexity validation
+    - `FullNameMustBeValid`: Full name validation
+    - `PhoneMustBeValid`: Phone format validation
+    - `UserMustBeAtLeastAge`: Age validation
+  - **Application-Level Rules** (require database access):
+    - `EmailMustBeUnique`: Checked in application layer
+    - `PhoneMustBeUnique`: Checked in application layer
 
 - **Events**: `events/`
   - `UserRegisteredEvent`: Domain event for user registration
@@ -147,8 +153,14 @@ Content-Type: application/json
 
 - **Service**: `user_service.rs`
   - `UserService::register_user()`: Orchestrates registration logic
-  - Validates all business rules
-  - Coordinates domain, infrastructure, and external services
+  - **Validates database-dependent business rules**:
+    - EmailMustBeUnique (requires database query)
+    - PhoneMustBeUnique (requires database query)
+  - Delegates to domain layer for user creation (which enforces domain rules)
+  - Hashes password using Argon2
+  - Generates verification token
+  - Persists to database
+  - Publishes UserRegistered event to Kafka
 
 - **Service Interface**: `user_service_interface.rs`
   - `UserServiceInterface::register_user()`: Contract definition

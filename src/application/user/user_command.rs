@@ -3,6 +3,16 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use validator::Validate;
 
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
+pub struct VerifyEmailCommand {
+    pub verification_token: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
+pub struct ResendVerificationEmailCommand {
+    pub email: String,
+}
+
 #[derive(Debug, Deserialize, Serialize, Validate, ToSchema)]
 pub struct RegisterUserCommand {
     #[validate(email)]

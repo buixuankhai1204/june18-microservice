@@ -1,6 +1,6 @@
 use crate::infrastructure::persistence::redis_client::RedisConnectionPool;
 use crate::application::user::user_service_interface::UserServiceInterface;
-use crate::application::user::user_command::RegisterUserCommand;
+use crate::application::user::user_command::{RegisterUserCommand, VerifyEmailCommand, ResendVerificationEmailCommand};
 use crate::domain::user::user_repository_interface::UserRepositoryInterface;
 use crate::presentation::user::user::{UserSerializer, CreateUserRequest, UpdateUserRequest, UserCreatedSerializer};
 use crate::api::domain::business_rule_interface::BusinessRuleInterface;
@@ -14,6 +14,7 @@ use std::time::Duration;
 use crate::application::authen::claim::hash;
 use crate::domain::user;
 use crate::domain::user::events::user_registered::UserRegisteredEvent;
+use crate::domain::user::events::user_activated::UserActivatedEvent;
 use crate::domain::user::verification::generate_verification_token;
 use crate::infrastructure::error::{AppError, AppResult};
 
@@ -36,34 +37,17 @@ impl UserServiceInterface for UserService {
         conn: &DatabaseTransaction,
         command: RegisterUserCommand,
     ) -> AppResult<UserCreatedSerializer> {
-        // Business Rule: Email must be valid
-        EmailMustBeValid { email: command.email.clone() }.check_broken()?;
-
-        // Business Rule: Email must be unique
+        // Business Rule: Email must be unique (database-dependent rule - checked in application layer)
         let email_is_unique = !user::user::Entity::email_exists(conn, &command.email).await?;
         EmailMustBeUnique { is_unique: email_is_unique }.check_broken()?;
 
-        // Business Rule: Password must meet requirements
-        PasswordMustMeetRequirements { password: command.password.clone() }.check_broken()?;
-
-        // Business Rule: Full name must be valid
-        FullNameMustBeValid { full_name: command.full_name.clone() }.check_broken()?;
-
-        // Business Rule: Phone must be valid and unique if provided
+        // Business Rule: Phone must be unique if provided (database-dependent rule - checked in application layer)
         if let Some(ref phone) = command.phone_number {
-            PhoneMustBeValid { phone: phone.clone() }.check_broken()?;
-
             let phone_is_unique = !user::user::Entity::phone_exists(conn, phone).await?;
             PhoneMustBeUnique { is_unique: phone_is_unique }.check_broken()?;
         }
 
-        // Business Rule: User must be at least 13 years old
-        UserMustBeAtLeastAge {
-            date_of_birth: command.date_of_birth,
-            minimum_age: 13,
-        }.check_broken()?;
-
-        // Create user model
+        // Create user model (domain layer enforces all other business rules internally)
         let mut user = user::user::ModelEx::create_user_for_registration(
             command.email.clone(),
             command.password.clone(),
@@ -99,9 +83,10 @@ impl UserServiceInterface for UserService {
         let event_json = serde_json::to_string(&event)
             .map_err(|e| AppError::BadRequestError(format!("Failed to serialize event: {}", e)))?;
 
+        let user_id_key = created_user.id.to_string();
         let kafka_record = FutureRecord::to(UserRegisteredEvent::topic_name())
             .payload(&event_json)
-            .key(&created_user.id.to_string());
+            .key(&user_id_key);
 
         // Send event asynchronously
         match self.kafka_producer.send(kafka_record, Duration::from_secs(5)).await {
@@ -115,6 +100,98 @@ impl UserServiceInterface for UserService {
             email: created_user.email,
             message: "Please check your email to verify account".to_string(),
         })
+    }
+
+    async fn verify_email(
+        &self,
+        conn: &DatabaseTransaction,
+        command: VerifyEmailCommand,
+    ) -> AppResult<bool> {
+        // Find user by verification token
+        let user_opt = user::user::Entity::find_user_by_verification_token(conn, &command.verification_token).await?;
+
+        // Business Rule: Verification token must exist
+        VerificationTokenMustExist { token_exists: user_opt.is_some() }.check_broken()?;
+
+        let user = user_opt.ok_or_else(|| AppError::BadRequestError("Invalid verification token".to_string()))?;
+
+        // Verify email (domain layer enforces business rules)
+        let verified_user = user.verify_email()?;
+
+        let verified_at = verified_user.email_verified_at.unwrap_or_else(|| chrono::Utc::now().naive_utc());
+        let user_id = verified_user.id;
+        let user_email = verified_user.email.clone();
+
+        // Persist updated user
+        user::user::Entity::update_user(conn, verified_user.into_active_model()).await?;
+
+        // Publish UserActivated event
+        let event = UserActivatedEvent::new(
+            user_id,
+            user_email,
+            verified_at,
+        );
+
+        let event_json = serde_json::to_string(&event)
+            .map_err(|e| AppError::BadRequestError(format!("Failed to serialize event: {}", e)))?;
+
+        let user_id_key = user_id.to_string();
+        let kafka_record = FutureRecord::to(UserActivatedEvent::topic_name())
+            .payload(&event_json)
+            .key(&user_id_key);
+
+        match self.kafka_producer.send(kafka_record, Duration::from_secs(5)).await {
+            Ok(_) => log::info!("UserActivated event published for user_id: {}", user_id),
+            Err(e) => log::error!("Failed to publish UserActivated event: {:?}", e),
+        }
+
+        Ok(true)
+    }
+
+    async fn resend_verification_email(
+        &self,
+        conn: &DatabaseTransaction,
+        command: ResendVerificationEmailCommand,
+    ) -> AppResult<bool> {
+        // Find user by email
+        let user_opt = user::user::Entity::find_user_by_email(conn, &command.email).await?;
+
+        let user = user_opt.ok_or_else(|| AppError::EntityNotFoundError {
+            detail: format!("User with email {} not found", command.email),
+        })?;
+
+        // Generate new verification token
+        let (new_token, new_expiry) = generate_verification_token();
+
+        // Prepare user for resend (domain layer enforces business rules)
+        let updated_user = user.prepare_resend_verification(new_token.clone(), new_expiry)?;
+
+        // Persist updated user
+        user::user::Entity::update_user(conn, updated_user.clone().into_active_model()).await?;
+
+        // Publish UserRegistered event again (to trigger email sending)
+        let event = UserRegisteredEvent::new(
+            updated_user.id,
+            updated_user.email.clone(),
+            format!("{} {}", updated_user.first_name, updated_user.last_name),
+            new_token,
+            chrono::Utc::now().naive_utc(),
+        );
+
+        let event_json = serde_json::to_string(&event)
+            .map_err(|e| AppError::BadRequestError(format!("Failed to serialize event: {}", e)))?;
+
+        let user_id_key = updated_user.id.to_string();
+        let kafka_record = FutureRecord::to(UserRegisteredEvent::topic_name())
+            .payload(&event_json)
+            .key(&user_id_key);
+
+        match self.kafka_producer.send(kafka_record, Duration::from_secs(5)).await {
+            Ok(_) => log::info!("Verification email resent for user_id: {}", updated_user.id),
+            Err(e) => log::error!("Failed to publish resend verification event: {:?}", e),
+        }
+
+        Ok(true)
     }
 
     async fn create_user(

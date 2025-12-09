@@ -102,6 +102,19 @@ impl UserRepositoryInterface for user::user::Entity {
         Ok(count > 0)
     }
 
+    async fn find_user_by_verification_token(
+        conn: &DatabaseTransaction,
+        token: &str,
+    ) -> AppResult<Option<ModelEx>> {
+        let user = user::user::Entity::load()
+            .filter(user::user::Column::VerificationToken.eq(token))
+            .filter(user::user::Column::IsDeleted.eq(false))
+            .with(address::address::Entity)
+            .one(conn)
+            .await?;
+        Ok(user)
+    }
+
     async fn list_users(
         conn: &DatabaseTransaction,
         page: u64,

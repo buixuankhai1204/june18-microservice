@@ -1,7 +1,7 @@
 use crate::core::app_state::AppState;
 use crate::core::response::{ClientResponseError, EntityResponse};
 use crate::application::user::user_service_interface::UserServiceInterface;
-use crate::application::user::user_command::RegisterUserCommand;
+use crate::application::user::user_command::{RegisterUserCommand, VerifyEmailCommand, ResendVerificationEmailCommand};
 use crate::presentation::user::user::{UserSerializer, CreateUserRequest, UpdateUserRequest, UserCreatedSerializer};
 use axum::extract::{Path, Query, State};
 use axum::Json;
@@ -128,6 +128,85 @@ pub async fn controller_register_user(
         Err(err) => {
             tx.rollback().await?;
             log::error!("Failed to register user: {err:?}");
+            Err(err)
+        }
+    }
+}
+
+#[utoipa::path(
+    post,
+    path = "/v1/auth/verify-email",
+    tags = ["user_service"],
+    request_body = VerifyEmailCommand,
+    responses(
+        (status = 200, description = "Email verified successfully", body = EntityResponse<bool>),
+        (status = 400, description = "Bad request - invalid or expired token", body = ClientResponseError),
+        (status = 500, description = "Internal server error", body = ClientResponseError)
+    )
+)]
+pub async fn controller_verify_email(
+    State(state): State<AppState>,
+    Json(command): Json<VerifyEmailCommand>,
+) -> Result<(StatusCode, Json<EntityResponse<bool>>), crate::infrastructure::error::AppError> {
+    log::info!("Verifying email with token: {}", command.verification_token);
+    let tx = state.db.begin().await?;
+
+    match state.user_service.verify_email(&tx, command).await {
+        Ok(result) => {
+            tx.commit().await?;
+            log::info!("Email verified successfully");
+            Ok((
+                StatusCode::OK,
+                Json(EntityResponse {
+                    message: "Email verified successfully. You can now login.".to_string(),
+                    data: Some(result),
+                    total: 1,
+                }),
+            ))
+        }
+        Err(err) => {
+            tx.rollback().await?;
+            log::error!("Failed to verify email: {err:?}");
+            Err(err)
+        }
+    }
+}
+
+#[utoipa::path(
+    post,
+    path = "/v1/auth/resend-verification",
+    tags = ["user_service"],
+    request_body = ResendVerificationEmailCommand,
+    responses(
+        (status = 200, description = "Verification email resent successfully", body = EntityResponse<bool>),
+        (status = 400, description = "Bad request - email already verified or rate limit exceeded", body = ClientResponseError),
+        (status = 404, description = "User not found", body = ClientResponseError),
+        (status = 500, description = "Internal server error", body = ClientResponseError)
+    )
+)]
+pub async fn controller_resend_verification_email(
+    State(state): State<AppState>,
+    Json(command): Json<ResendVerificationEmailCommand>,
+) -> Result<(StatusCode, Json<EntityResponse<bool>>), crate::infrastructure::error::AppError> {
+    log::info!("Resending verification email for: {}", command.email);
+    let tx = state.db.begin().await?;
+
+    match state.user_service.resend_verification_email(&tx, command).await {
+        Ok(result) => {
+            tx.commit().await?;
+            log::info!("Verification email resent successfully");
+            Ok((
+                StatusCode::OK,
+                Json(EntityResponse {
+                    message: "Verification email has been resent. Please check your inbox.".to_string(),
+                    data: Some(result),
+                    total: 1,
+                }),
+            ))
+        }
+        Err(err) => {
+            tx.rollback().await?;
+            log::error!("Failed to resend verification email: {err:?}");
             Err(err)
         }
     }

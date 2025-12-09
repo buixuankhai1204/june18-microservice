@@ -1,5 +1,5 @@
 use crate::presentation::user::user::{UserSerializer, CreateUserRequest, UpdateUserRequest, UserCreatedSerializer};
-use crate::application::user::user_command::RegisterUserCommand;
+use crate::application::user::user_command::{RegisterUserCommand, VerifyEmailCommand, ResendVerificationEmailCommand};
 use sea_orm::DatabaseTransaction;
 use crate::infrastructure::error::AppResult;
 
@@ -9,6 +9,18 @@ pub trait UserServiceInterface: Send + Sync + 'static {
         conn: &DatabaseTransaction,
         command: RegisterUserCommand,
     ) -> AppResult<UserCreatedSerializer>;
+
+    async fn verify_email(
+        &self,
+        conn: &DatabaseTransaction,
+        command: VerifyEmailCommand,
+    ) -> AppResult<bool>;
+
+    async fn resend_verification_email(
+        &self,
+        conn: &DatabaseTransaction,
+        command: ResendVerificationEmailCommand,
+    ) -> AppResult<bool>;
 
     async fn create_user(
         &self,

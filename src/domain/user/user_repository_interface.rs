@@ -14,5 +14,6 @@ pub trait UserRepositoryInterface: Send + Sync {
     async fn username_exists(conn: &DatabaseTransaction, username: &str) -> AppResult<bool>;
     async fn email_exists(conn: &DatabaseTransaction, email: &str) -> AppResult<bool>;
     async fn phone_exists(conn: &DatabaseTransaction, phone: &str) -> AppResult<bool>;
+    async fn find_user_by_verification_token(conn: &DatabaseTransaction, token: &str) -> AppResult<Option<user::ModelEx>>;
     async fn list_users(conn: &DatabaseTransaction, page: u64, page_size: u64) -> AppResult<Vec<user::Model>>;
 }

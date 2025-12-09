@@ -26,6 +26,8 @@ impl MigrationTrait for Migration {
                     .col(string_null(Users::VerificationToken))
                     .col(timestamp_null(Users::VerificationTokenExpiry))
                     .col(timestamp_null(Users::EmailVerifiedAt))
+                    .col(integer(Users::VerificationResendCount).default(0))
+                    .col(timestamp_null(Users::LastVerificationResendAt))
                     .col(timestamp_null(Users::CreatedAt))
                     .col(timestamp_null(Users::UpdatedAt))
                     .col(timestamp_null(Users::DeletedAt))
@@ -59,6 +61,8 @@ pub enum Users {
     VerificationToken,
     VerificationTokenExpiry,
     EmailVerifiedAt,
+    VerificationResendCount,
+    LastVerificationResendAt,
     CreatedAt,
     UpdatedAt,
     DeletedAt,

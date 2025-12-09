@@ -14,7 +14,9 @@ pub fn build_routes() -> OpenApiRouter<AppState> {
     let auth_routes =
         OpenApiRouter::new()
         .routes(routes!(domain::auth::auth::controller_login_by_email))
-        .routes(routes!(domain::user::user::controller_register_user));
+        .routes(routes!(domain::user::user::controller_register_user))
+        .routes(routes!(domain::user::user::controller_verify_email))
+        .routes(routes!(domain::user::user::controller_resend_verification_email));
 
     let user_routes = OpenApiRouter::new()
         .routes(routes!(domain::user::user::controller_get_profile))
