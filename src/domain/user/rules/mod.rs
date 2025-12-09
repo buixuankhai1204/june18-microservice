@@ -12,6 +12,9 @@ pub mod verification_token_must_exist;
 pub mod verification_token_must_not_be_expired;
 pub mod user_must_not_be_already_verified;
 pub mod verification_resend_limit_must_not_be_exceeded;
+pub mod account_must_be_active;
+pub mod account_must_not_be_locked;
+pub mod failed_login_limit_must_not_be_exceeded;
 
 pub use email_must_be_unique::EmailMustBeUnique;
 pub use email_must_be_valid::EmailMustBeValid;
@@ -26,3 +29,6 @@ pub use verification_token_must_exist::VerificationTokenMustExist;
 pub use verification_token_must_not_be_expired::VerificationTokenMustNotBeExpired;
 pub use user_must_not_be_already_verified::UserMustNotBeAlreadyVerified;
 pub use verification_resend_limit_must_not_be_exceeded::VerificationResendLimitMustNotBeExceeded;
+pub use account_must_be_active::AccountMustBeActive;
+pub use account_must_not_be_locked::AccountMustNotBeLocked;
+pub use failed_login_limit_must_not_be_exceeded::FailedLoginLimitMustNotBeExceeded;

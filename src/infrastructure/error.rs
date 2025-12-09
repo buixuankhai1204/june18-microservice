@@ -28,6 +28,8 @@ pub enum AppError {
     ConflictError(String),
     #[error("{0}")]
     UnauthorizedError(String),
+    #[error("{0}")]
+    AccountLockedError(String),
     #[error("Bad request {0}")]
     BadRequestError(String),
     #[error("{0}")]
@@ -163,6 +165,10 @@ impl AppError {
             UnauthorizedError(_err) => {
                 (StatusCode::UNAUTHORIZED, ClientResponseError::Unauthorized)
             },
+            AccountLockedError(err) => (
+                StatusCode::LOCKED,
+                ClientResponseError::BadRequest { detail: err.to_string() },
+            ),
             UuidError(_err) => {
                 (StatusCode::INTERNAL_SERVER_ERROR, ClientResponseError::InternalServerError)
             },

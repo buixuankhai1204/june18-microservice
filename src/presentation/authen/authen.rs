@@ -17,14 +17,22 @@ impl From<TokenResponse> for LoginResponse {
 
 #[derive(Debug, Serialize, Deserialize, ToSchema, Clone)]
 pub struct TokenResponse {
-    pub token_type: String,
     pub access_token: String,
     pub refresh_token: String,
-    pub expire_in: u64,
+    pub expires_in: u64,
+    pub user: UserInfo,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema, Clone)]
+pub struct UserInfo {
+    pub id: String,
+    pub email: String,
+    pub full_name: String,
+    pub role: String,
 }
 
 impl TokenResponse {
-    pub fn new(access_token: String, refresh_token: String, expire_in: u64) -> Self {
-        Self { token_type: BEARER.to_string(), access_token, refresh_token, expire_in }
+    pub fn new(access_token: String, refresh_token: String, expires_in: u64, user: UserInfo) -> Self {
+        Self { access_token, refresh_token, expires_in, user }
     }
 }

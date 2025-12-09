@@ -26,7 +26,7 @@ pub async fn controller_login_by_email(
     State(state): State<AppState>,
     Json(cmd): Json<LoginByEmailCommand>,
 ) -> AppResult<Json<LoginResponse>> {
-    log::info!("Login by email with request: {cmd:?}.");
+    log::info!("Login by email with request for: {}", cmd.get_email());
 
     // Validate command
     if let Err(validation_err) = cmd.validate() {
@@ -44,12 +44,12 @@ pub async fn controller_login_by_email(
     {
         Ok(token_response) => {
             tx.commit().await?;
-            log::info!("Success login for user: {}", cmd.get_username());
+            log::info!("Success login for user: {}", cmd.get_email());
             Ok(Json(LoginResponse::Token(token_response)))
         }
         Err(err) => {
             tx.rollback().await?;
-            error!("Failed to login user '{}': {err:?}", cmd.get_username());
+            error!("Failed to login user '{}': {err:?}", cmd.get_email());
             Err(err)
         }
     }

@@ -76,6 +76,7 @@ impl UserClaimsRequest for axum::extract::Request {
 pub fn service_generate_tokens(
     user_id: &i64,
     session_id: &Uuid,
+    user_info: crate::presentation::authen::authen::UserInfo,
 ) -> AppResult<TokenResponse> {
     let access_token =
         UserClaims::new(EXPIRE_BEARER_TOKEN_SECS, user_id, session_id)
@@ -83,7 +84,7 @@ pub fn service_generate_tokens(
     let refresh_token =
         UserClaims::new(EXPIRE_REFRESH_TOKEN_SECS, user_id, session_id)
             .encode(&REFRESH_TOKEN_ENCODE_KEY)?;
-    Ok(TokenResponse::new(access_token, refresh_token, EXPIRE_BEARER_TOKEN_SECS.as_secs()))
+    Ok(TokenResponse::new(access_token, refresh_token, EXPIRE_BEARER_TOKEN_SECS.as_secs(), user_info))
 }
 
 

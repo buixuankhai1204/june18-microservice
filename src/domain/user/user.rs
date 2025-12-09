@@ -31,6 +31,10 @@ pub struct Model {
     pub email_verified_at: Option<NaiveDateTime>,
     pub verification_resend_count: i32,
     pub last_verification_resend_at: Option<NaiveDateTime>,
+    pub failed_login_attempts: i32,
+    pub last_failed_login_at: Option<NaiveDateTime>,
+    pub account_locked_until: Option<NaiveDateTime>,
+    pub last_login_at: Option<NaiveDateTime>,
     pub created_at: Option<NaiveDateTime>,
     pub updated_at: Option<NaiveDateTime>,
     pub deleted_at: Option<NaiveDateTime>,
@@ -132,6 +136,10 @@ impl ModelEx {
             email_verified_at: None,
             verification_resend_count: 0,
             last_verification_resend_at: None,
+            failed_login_attempts: 0,
+            last_failed_login_at: None,
+            account_locked_until: None,
+            last_login_at: None,
             created_at: Some(Utc::now().naive_utc()),
             updated_at: Some(Utc::now().naive_utc()),
             deleted_at: None,
@@ -179,6 +187,10 @@ impl ModelEx {
             email_verified_at: None,
             verification_resend_count: 0,
             last_verification_resend_at: None,
+            failed_login_attempts: 0,
+            last_failed_login_at: None,
+            account_locked_until: None,
+            last_login_at: None,
             created_at: Some(Utc::now().naive_utc()),
             updated_at: Some(Utc::now().naive_utc()),
             deleted_at: None,
@@ -291,5 +303,75 @@ impl ModelEx {
         self.updated_at = Some(now);
 
         Ok(self)
+    }
+
+    /// Business Rule: Validate login attempt
+    /// Checks account status and lock status before password verification
+    pub fn validate_login_attempt(&self) -> AppResult<()> {
+        use crate::api::domain::business_rule_interface::BusinessRuleInterface;
+        use crate::domain::user::rules::*;
+
+        // Business Rule: Account must not be locked
+        AccountMustNotBeLocked {
+            account_locked_until: self.account_locked_until,
+        }.check_broken()?;
+
+        // Business Rule: Account must be active
+        AccountMustBeActive {
+            status: self.status.clone(),
+        }.check_broken()?;
+
+        // Business Rule: Failed login limit must not be exceeded
+        FailedLoginLimitMustNotBeExceeded {
+            failed_attempts: self.failed_login_attempts,
+            last_failed_login_at: self.last_failed_login_at,
+            max_attempts: 5,
+            lockout_window_minutes: 15,
+        }.check_broken()?;
+
+        Ok(())
+    }
+
+    /// Business Rule: Handle failed login attempt
+    /// Increments failed login counter and locks account if threshold exceeded
+    pub fn handle_failed_login(mut self) -> Self {
+        let now = Utc::now().naive_utc();
+
+        // Reset counter if more than 15 minutes passed since last failed attempt
+        if let Some(last_failed) = self.last_failed_login_at {
+            let fifteen_minutes_ago = now - chrono::Duration::minutes(15);
+            if last_failed <= fifteen_minutes_ago {
+                self.failed_login_attempts = 0;
+            }
+        }
+
+        // Increment failed login counter
+        self.failed_login_attempts += 1;
+        self.last_failed_login_at = Some(now);
+
+        // Lock account for 30 minutes if 5 or more failed attempts
+        if self.failed_login_attempts >= 5 {
+            self.account_locked_until = Some(now + chrono::Duration::minutes(30));
+        }
+
+        self.updated_at = Some(now);
+        self
+    }
+
+    /// Business Rule: Handle successful login
+    /// Resets failed login counter and updates last login timestamp
+    pub fn handle_successful_login(mut self) -> Self {
+        let now = Utc::now().naive_utc();
+
+        // Reset failed login tracking
+        self.failed_login_attempts = 0;
+        self.last_failed_login_at = None;
+        self.account_locked_until = None;
+
+        // Update last login timestamp
+        self.last_login_at = Some(now);
+        self.updated_at = Some(now);
+
+        self
     }
 }

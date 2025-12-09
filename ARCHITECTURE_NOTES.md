@@ -383,6 +383,265 @@ src/
 
 ---
 
+## FR-US-003: User Login Implementation
+
+### Overview
+User login authenticates users and issues JWT tokens. Includes failed login tracking, account locking, and device information logging for security.
+
+### Business Rules Implementation
+
+#### 1. Domain Layer Business Rules
+**Location**: `src/domain/user/user.rs` → `ModelEx::validate_login_attempt()`, `ModelEx::handle_failed_login()`, `ModelEx::handle_successful_login()`
+
+**Rules enforced in domain layer** (no external dependencies):
+- ✅ `AccountMustNotBeLocked` - Validates account_locked_until < now
+- ✅ `AccountMustBeActive` - Validates user status == 'active'
+- ✅ `FailedLoginLimitMustNotBeExceeded` - Validates failed attempts < 5 within 15-minute window with auto-reset
+
+**Why in domain layer?**
+- Account lock check is **pure business logic** (timestamp comparison)
+- Status validation is **domain invariant** (user state validation)
+- Failed login tracking with auto-reset is **core business rule** (no external service needed)
+- Can be tested in isolation without database
+
+#### 2. Application Layer Operations
+**Location**: `src/application/authen/authen_service.rs` → `AuthenService::login_by_email()`
+
+**Operations requiring infrastructure** (not business rules):
+- ✅ Find user by email - Database query
+- ✅ Password verification - Argon2 hashing (external library)
+- ✅ Session storage - Redis operations
+- ✅ JWT token generation - Cryptography library
+- ✅ Event publishing - Kafka producer
+
+**Why in application layer?**
+- These are **infrastructure operations**, not business rules
+- Require external dependencies (database, Redis, Kafka)
+- Application service orchestrates infrastructure and domain
+
+### Flow Diagram - User Login
+
+```
+Controller (API Layer)
+    ↓ receives LoginByEmailCommand
+Application Service
+    ↓ finds user by email (DB query)
+    ↓ if not found → return "Invalid email or password"
+    ↓ calls domain layer validation
+Domain Layer (ModelEx::validate_login_attempt)
+    ↓ validates AccountMustNotBeLocked
+    ↓ validates AccountMustBeActive
+    ↓ validates FailedLoginLimitMustNotBeExceeded
+    ↓ returns validation result
+Application Service
+    ↓ verifies password using Argon2
+    ↓ if password invalid:
+        ↓ calls domain layer
+        Domain Layer (ModelEx::handle_failed_login)
+            ↓ checks if >15 min since last failure
+            ↓ resets counter if >15 min (auto-reset)
+            ↓ increments failed_login_attempts
+            ↓ updates last_failed_login_at
+            ↓ locks account if attempts >= 5 (sets account_locked_until)
+            ↓ returns updated User model
+        ↓ persists to database
+        ↓ returns 401 Unauthorized
+    ↓ if password valid:
+        ↓ calls domain layer
+        Domain Layer (ModelEx::handle_successful_login)
+            ↓ resets failed_login_attempts to 0
+            ↓ clears last_failed_login_at
+            ↓ clears account_locked_until
+            ↓ updates last_login_at
+            ↓ returns updated User model
+        ↓ persists to database
+        ↓ generates session ID (UUID)
+        ↓ stores refresh token in Redis (7 days TTL)
+        ↓ generates JWT access token (15 min) and refresh token (7 days)
+        ↓ publishes UserLoggedIn event to Kafka
+        ↓ returns TokenResponse with user info
+```
+
+### Key Pattern: Auto-Reset Failed Login Counter
+
+**Implementation in Domain Layer** (`src/domain/user/user.rs`):
+```rust
+pub fn handle_failed_login(mut self) -> Self {
+    let now = Utc::now().naive_utc();
+
+    // Auto-reset logic: Reset counter if >15 minutes passed
+    if let Some(last_failed) = self.last_failed_login_at {
+        let fifteen_minutes_ago = now - Duration::minutes(15);
+        if last_failed <= fifteen_minutes_ago {
+            self.failed_login_attempts = 0; // Counter reset
+        }
+    }
+
+    // Increment failed login counter
+    self.failed_login_attempts += 1;
+    self.last_failed_login_at = Some(now);
+
+    // Lock account for 30 minutes if 5 or more failed attempts
+    if self.failed_login_attempts >= 5 {
+        self.account_locked_until = Some(now + Duration::minutes(30));
+    }
+
+    self.updated_at = Some(now);
+    self
+}
+```
+
+**Why this pattern?**
+- **Auto-reset is business logic**, not infrastructure concern
+- **Domain model controls its own state transitions**
+- **No external timer/scheduler needed** - reset happens on next login attempt
+- **User-friendly** - users get automatic retry window after 15 minutes of no attempts
+
+### Key Pattern: Separation of Validation and Side Effects
+
+**Domain Layer** - Pure validation (no side effects):
+```rust
+// VALIDATES but doesn't modify anything
+pub fn validate_login_attempt(&self) -> AppResult<()> {
+    AccountMustNotBeLocked { ... }.check_broken()?;
+    AccountMustBeActive { ... }.check_broken()?;
+    FailedLoginLimitMustNotBeExceeded { ... }.check_broken()?;
+    Ok(())
+}
+```
+
+**Domain Layer** - State transitions (pure, returns new state):
+```rust
+// MODIFIES state but has no external dependencies
+pub fn handle_failed_login(mut self) -> Self {
+    // Pure state transformation
+    self.failed_login_attempts += 1;
+    self.last_failed_login_at = Some(now);
+    // ...
+    self
+}
+```
+
+**Application Layer** - Infrastructure operations (side effects):
+```rust
+// ORCHESTRATES infrastructure and domain
+async fn login_by_email(...) -> AppResult<TokenResponse> {
+    let user = find_user_by_email(conn, email).await?;  // DB query
+    user.validate_login_attempt()?;                      // Domain validation
+    let valid = verify_password(...).await?;              // Argon2
+    let user = user.handle_failed_login();                // Domain transformation
+    update_user(conn, user).await?;                       // DB persistence
+    store_in_redis(...).await?;                           // Redis operation
+    publish_to_kafka(...).await?;                         // Kafka operation
+    Ok(response)
+}
+```
+
+**Why this separation?**
+- **Domain layer is pure and testable** - no mocking needed
+- **Application layer handles all I/O** - database, Redis, Kafka
+- **Clear responsibilities** - domain = rules, application = orchestration
+
+### Database Schema Evolution
+
+**Migration File**: `user_migration/src/m20251209_000001_add_login_tracking_fields.rs`
+
+**Fields Added for FR-US-003** (ALTER TABLE migration):
+```sql
+ALTER TABLE users
+ADD COLUMN failed_login_attempts INTEGER DEFAULT 0 NOT NULL;
+
+ALTER TABLE users
+ADD COLUMN last_failed_login_at TIMESTAMP NULL;
+
+ALTER TABLE users
+ADD COLUMN account_locked_until TIMESTAMP NULL;
+
+ALTER TABLE users
+ADD COLUMN last_login_at TIMESTAMP NULL;
+```
+
+**Purpose**:
+- `failed_login_attempts`: Tracks failed attempts within 15-minute rolling window
+- `last_failed_login_at`: Enables auto-reset logic (>15 min check)
+- `account_locked_until`: Timestamp for account lockout expiration
+- `last_login_at`: Tracks last successful login for analytics/security
+
+**Migration Strategy**:
+- ✅ Used ALTER TABLE for existing databases
+- ✅ Includes rollback support via `down()` method
+- ✅ Default values ensure existing users work without migration issues
+- ✅ Run with: `cd user_migration && cargo run -- up`
+
+### JWT Token Strategy
+
+**Access Token** (Short-lived):
+- **Expiry**: 15 minutes (900 seconds)
+- **Purpose**: Authorize API requests
+- **Storage**: Memory/localStorage (client-side)
+- **Algorithm**: RS256 (RSA asymmetric encryption)
+
+**Refresh Token** (Long-lived):
+- **Expiry**: 7 days (604800 seconds)
+- **Purpose**: Obtain new access tokens without re-login
+- **Storage**: Redis with key `refresh_token:session:{session_id}`
+- **Algorithm**: RS256 (RSA asymmetric encryption)
+
+**Session Management**:
+- Each login creates unique session_id (UUID v4)
+- Both tokens contain same session_id in claims
+- Logout deletes session from Redis → invalidates both tokens
+- Future: Implement max 5 concurrent sessions per user
+
+### File Structure for FR-US-003
+
+```
+src/
+├── domain/
+│   └── user/
+│       ├── user.rs
+│       │   ├── validate_login_attempt()        # Domain validation
+│       │   ├── handle_failed_login()           # Domain state transition
+│       │   └── handle_successful_login()       # Domain state transition
+│       ├── rules/
+│       │   ├── account_must_be_active.rs                    # Domain rule
+│       │   ├── account_must_not_be_locked.rs                # Domain rule
+│       │   └── failed_login_limit_must_not_be_exceeded.rs   # Domain rule
+│       └── events/
+│           └── user_logged_in.rs               # Domain event
+│
+├── application/
+│   └── authen/
+│       ├── authen_command.rs
+│       │   ├── LoginByEmailCommand             # Command with device_info
+│       │   └── DeviceInfo                      # Device tracking DTO
+│       ├── authen_service.rs
+│       │   └── login_by_email()                # Service orchestration
+│       └── claim.rs
+│           └── service_generate_tokens()       # JWT generation
+│
+├── infrastructure/
+│   ├── error.rs
+│   │   └── AccountLockedError                  # New error variant (423 status)
+│   └── model/
+│       └── user_repository.rs
+│           └── find_user_by_email()            # Repository method
+│
+├── presentation/
+│   └── authen/
+│       └── authen.rs
+│           ├── TokenResponse                   # Updated with user info
+│           └── UserInfo                        # User details in response
+│
+└── api/
+    └── domain/
+        └── auth/
+            └── auth.rs
+                └── controller_login_by_email() # Updated endpoint
+```
+
+---
+
 ## Key Takeaways
 
 1. ✅ **Business rules WITHOUT external dependencies** → Domain Layer
@@ -394,3 +653,6 @@ src/
 7. ✅ **Auto-reset logic in domain** - no external schedulers needed
 8. ✅ **Reuse events** where appropriate to simplify architecture
 9. ✅ **Domain events enable loose coupling** between services
+10. ✅ **Separate validation from state transitions** - testability and clarity
+11. ✅ **Security through domain rules** - failed login tracking, account locking
+12. ✅ **Infrastructure operations in application layer** - Redis, Kafka, JWT
